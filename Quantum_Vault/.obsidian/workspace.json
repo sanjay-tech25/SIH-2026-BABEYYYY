@@ -1,0 +1,225 @@
+{
+  "main": {
+    "id": "ccaefe55bbb25605",
+    "type": "split",
+    "children": [
+      {
+        "id": "de95b92db8eebd49",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "99d2086536f9e5f5",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "566e12736de6164a",
+    "type": "split",
+    "children": [
+      {
+        "id": "21afe23acca6a8c4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f9d01d75d204574a",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "90d2f1382566225f",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "e44fb429f1dca47b",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "1faa34bc90381654",
+    "type": "split",
+    "children": [
+      {
+        "id": "a9026bfc49f0763e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cf134bc30401b2b8",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "a3042e7cad8db534",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "f94086b21aabe2df",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "34050c31400575c2",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "7b9c106fdd68e88d",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "99d2086536f9e5f5",
+  "lastOpenFiles": [
+    "03 - Quantum Gates/CNOT.md",
+    "Untitled.base",
+    "03 - Quantum Gates/Controlled Operations.md",
+    "06 - Quantum Algorithms/Grover/Graph Coloring Exercises.md",
+    "2026-09-02.md",
+    "09 - Quantum Error Correction/Shor Code.md",
+    "11 - Implementation/Qiskit.md",
+    "00 - Dashboard/Quantum Algorithm Hub.md",
+    "06 - Quantum Algorithms/Bernstein-Vazirani Algorithm.md",
+    "00 - Dashboard/Algorithm Tracker.md",
+    "00 - Dashboard/Learning Roadmap.md",
+    "06 - Quantum Algorithms/Grover/Search Exercises.md",
+    "06 - Quantum Algorithms/Grover/SAT Exercises.md",
+    "06 - Quantum Algorithms/Grover/Knapsack Exercises.md",
+    "06 - Quantum Algorithms/Grover",
+    "12 - Resources/Repository Source Index.md",
+    "12 - Resources/Qiskit Documentation.md",
+    "12 - Resources/Quantum Katas.md",
+    "11 - Implementation/Benchmarking.md",
+    "11 - Implementation/Qiskit Primitives.md",
+    "11 - Implementation/Qiskit Circuits.md",
+    "10 - Quantum Computing Hardware/Error Mitigation.md",
+    "10 - Quantum Computing Hardware/Readout Errors.md",
+    "10 - Quantum Computing Hardware/Gate Errors.md",
+    "10 - Quantum Computing Hardware/Quantum Circuit Depth.md",
+    "10 - Quantum Computing Hardware/NISQ.md",
+    "10 - Quantum Computing Hardware/Decoherence.md",
+    "10 - Quantum Computing Hardware/Quantum Noise.md",
+    "10 - Quantum Computing Hardware",
+    "09 - Quantum Error Correction",
+    "08 - Quantum Cryptography",
+    "05 - Quantum Protocols",
+    "12 - Resources",
+    "11 - Implementation",
+    "07 - Advanced Algorithms",
+    "06 - Quantum Algorithms",
+    "00 - Dashboard/Quantum Dependency Canvas.canvas"
+  ]
+}

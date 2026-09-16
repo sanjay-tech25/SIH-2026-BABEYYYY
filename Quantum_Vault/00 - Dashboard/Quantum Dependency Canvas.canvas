@@ -1,0 +1,127 @@
+{
+  "nodes": [
+    {
+      "id": "math",
+      "x": 0,
+      "y": 0,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "## Stage 1: Math Foundations\n[[Complex Numbers]] \u2192 [[Vectors]] \u2192 [[Matrices]] \u2192 [[Unitary Matrices]]"
+    },
+    {
+      "id": "gates",
+      "x": 0,
+      "y": 150,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "## Stage 2: Qubits & Gates\n[[Qubit]] \u2192 [[Hadamard]] \u2192 [[CNOT]] \u2192 [[Controlled Operations]]"
+    },
+    {
+      "id": "measure",
+      "x": 0,
+      "y": 300,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "## Stage 3: Measurement\n[[Single Qubit Measurement]] \u2192 [[Multi Qubit Measurement]] \u2192 [[Born Rule]]"
+    },
+    {
+      "id": "protocols",
+      "x": 0,
+      "y": 450,
+      "width": 260,
+      "height": 100,
+      "type": "text",
+      "text": "## Stage 4: Protocols\n[[Quantum Teleportation]] | [[Superdense Coding]] | [[CHSH Game]]"
+    },
+    {
+      "id": "oracular",
+      "x": 350,
+      "y": 150,
+      "width": 300,
+      "height": 120,
+      "type": "text",
+      "text": "## Stage 5: Oracular Algorithms\n[[Quantum Oracle]] \u2192 [[Phase Kickback]] \u2192 [[Deutsch-Jozsa Algorithm]] \u2192 [[Bernstein-Vazirani Algorithm]] \u2192 [[Simon Algorithm]]"
+    },
+    {
+      "id": "grover",
+      "x": 350,
+      "y": 300,
+      "width": 300,
+      "height": 100,
+      "type": "text",
+      "text": "## Stage 6: Search\n[[Grover Algorithm]] \u2192 [[Amplitude Amplification]]"
+    },
+    {
+      "id": "fourier",
+      "x": 350,
+      "y": 450,
+      "width": 300,
+      "height": 120,
+      "type": "text",
+      "text": "## Stage 7: Fourier & Factoring\n[[Quantum Fourier Transform]] \u2192 [[Quantum Phase Estimation]] \u2192 [[Period Finding]] \u2192 [[Shor Algorithm]]"
+    },
+    {
+      "id": "advanced",
+      "x": 720,
+      "y": 150,
+      "width": 280,
+      "height": 120,
+      "type": "text",
+      "text": "## Stage 8: Advanced & NISQ\n[[Quantum Counting]] | [[VQE]] | [[QAOA]] | [[HHL]]"
+    },
+    {
+      "id": "qec_crypto",
+      "x": 720,
+      "y": 350,
+      "width": 280,
+      "height": 120,
+      "type": "text",
+      "text": "## Cryptography & QEC\n[[BB84]] | [[E91]] | [[Shor Code]] | [[Surface Code]]"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "math",
+      "toNode": "gates"
+    },
+    {
+      "id": "e2",
+      "fromNode": "gates",
+      "toNode": "measure"
+    },
+    {
+      "id": "e3",
+      "fromNode": "measure",
+      "toNode": "protocols"
+    },
+    {
+      "id": "e4",
+      "fromNode": "protocols",
+      "toNode": "oracular"
+    },
+    {
+      "id": "e5",
+      "fromNode": "oracular",
+      "toNode": "grover"
+    },
+    {
+      "id": "e6",
+      "fromNode": "grover",
+      "toNode": "fourier"
+    },
+    {
+      "id": "e7",
+      "fromNode": "fourier",
+      "toNode": "advanced"
+    },
+    {
+      "id": "e8",
+      "fromNode": "advanced",
+      "toNode": "qec_crypto"
+    }
+  ]
+}
