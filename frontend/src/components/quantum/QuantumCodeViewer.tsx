@@ -156,17 +156,8 @@ export function QuantumCodeViewer({
     <div className={`overflow-hidden rounded-2xl border border-zinc-800 bg-[#090d16] shadow-2xl transition-all ${className}`}>
       {/* 1. Header Bar: Window chrome, Framework Selector & Action Toolbar */}
       <div className="flex flex-col gap-3 border-b border-zinc-800/80 bg-[#0d121f] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Left: Window Dots & File Tab */}
+        {/* Left: File Tab & Target Vendor Badge */}
         <div className="flex items-center gap-3">
-          {/* macOS window controls */}
-          <div className="flex items-center gap-1.5" aria-hidden="true">
-            <span className="h-3 w-3 rounded-full bg-rose-500/80 inline-block shadow-sm" />
-            <span className="h-3 w-3 rounded-full bg-amber-500/80 inline-block shadow-sm" />
-            <span className="h-3 w-3 rounded-full bg-emerald-500/80 inline-block shadow-sm" />
-          </div>
-
-          <div className="h-4 w-px bg-zinc-800" />
-
           {/* Active File Tab */}
           <div className="flex items-center gap-2 rounded-lg bg-zinc-900/90 px-3 py-1 text-xs font-mono text-zinc-200 border border-zinc-700/60 shadow-inner">
             <TerminalIcon className="h-3.5 w-3.5 text-emerald-400" />
