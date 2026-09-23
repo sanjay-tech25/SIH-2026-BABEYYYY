@@ -5,9 +5,10 @@ import {
   DownloadIcon, 
   ExternalLinkIcon, 
   TerminalIcon, 
-  LayersIcon,
-  Maximize2Icon,
-  Minimize2Icon
+  PlayIcon,
+  RefreshCwIcon,
+  RotateCcwIcon,
+  Edit3Icon
 } from 'lucide-react';
 import { FRAMEWORKS, type QuantumFramework } from '../../services/quantumCodeGenerator';
 
@@ -22,6 +23,12 @@ interface QuantumCodeViewerProps {
   onLaunchColab?: () => void;
   colabLoading?: boolean;
   className?: string;
+  // Editable coding simulator extensions:
+  editable?: boolean;
+  onChange?: (newCode: string) => void;
+  onRunSimulation?: () => void;
+  isSimulating?: boolean;
+  onResetCode?: () => void;
 }
 
 /**
@@ -117,16 +124,20 @@ export function QuantumCodeViewer({
   code,
   framework,
   onFrameworkChange,
-  title = 'Multi-Framework Transpiled Source Code',
-  subtitle = 'Synthesized AST representation for production execution',
+  title = 'Quantum Source Code Simulator',
+  subtitle = 'In-platform executable quantum code environment',
   numQubits = 2,
   shots = 1024,
   onLaunchColab,
   colabLoading = false,
-  className = ''
+  className = '',
+  editable = false,
+  onChange,
+  onRunSimulation,
+  isSimulating = false,
+  onResetCode
 }: QuantumCodeViewerProps) {
   const [copied, setCopied] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const currentMeta = FRAMEWORKS.find((f) => f.id === framework) || FRAMEWORKS[0];
   const filename = `quantum_circuit_${framework}.${currentMeta.fileExtension}`;
@@ -149,21 +160,42 @@ export function QuantumCodeViewer({
     URL.revokeObjectURL(url);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const target = e.currentTarget;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      const newCode = code.substring(0, start) + '    ' + code.substring(end);
+      if (onChange) onChange(newCode);
+      setTimeout(() => {
+        target.selectionStart = target.selectionEnd = start + 4;
+      }, 0);
+    }
+  };
+
   const codeLines = code.split('\n');
   const highlightedCode = highlightQuantumCode(code);
 
   return (
     <div className={`overflow-hidden rounded-2xl border border-zinc-800 bg-[#090d16] shadow-2xl transition-all ${className}`}>
-      {/* 1. Header Bar: Window chrome, Framework Selector & Action Toolbar */}
+      {/* 1. Header Bar: File Tab, Framework Selector & Action Toolbar */}
       <div className="flex flex-col gap-3 border-b border-zinc-800/80 bg-[#0d121f] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Left: File Tab & Target Vendor Badge */}
+        {/* Left: Active File Tab & Status */}
         <div className="flex items-center gap-3">
-          {/* Active File Tab */}
-          <div className="flex items-center gap-2 rounded-lg bg-zinc-900/90 px-3 py-1 text-xs font-mono text-zinc-200 border border-zinc-700/60 shadow-inner">
+          <div className="flex items-center gap-2 rounded-lg bg-zinc-900/90 px-3 py-1.5 text-xs font-mono text-zinc-200 border border-zinc-700/60 shadow-inner">
             <TerminalIcon className="h-3.5 w-3.5 text-emerald-400" />
             <span className="font-semibold text-emerald-300">{filename}</span>
             <span className="text-[10px] text-zinc-500">({codeLines.length} lines)</span>
           </div>
+
+          {/* Editable Indicator */}
+          {editable && (
+            <span className="hidden sm:inline-flex items-center gap-1 rounded bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+              <Edit3Icon className="h-3 w-3" />
+              Live Editable
+            </span>
+          )}
 
           {/* Target vendor badge */}
           <span className={`hidden md:inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${currentMeta.badgeColor}`}>
@@ -194,6 +226,19 @@ export function QuantumCodeViewer({
                 );
               })}
             </div>
+          )}
+
+          {/* Reset Code Button */}
+          {editable && onResetCode && (
+            <button
+              type="button"
+              onClick={onResetCode}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 px-2.5 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-700 hover:text-white transition shadow-sm"
+              title="Reset code to topic default"
+            >
+              <RotateCcwIcon className="h-3 w-3 text-zinc-400" />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
           )}
 
           {/* Copy Button */}
@@ -240,15 +285,27 @@ export function QuantumCodeViewer({
             </button>
           )}
 
-          {/* Expand/Collapse Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="hidden sm:inline-flex items-center justify-center h-8 w-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
-            title={isExpanded ? 'Collapse view' : 'Expand full view'}
-          >
-            {isExpanded ? <Minimize2Icon className="h-3.5 w-3.5" /> : <Maximize2Icon className="h-3.5 w-3.5" />}
-          </button>
+          {/* Run In-Platform Simulation Button */}
+          {onRunSimulation && (
+            <button
+              type="button"
+              onClick={onRunSimulation}
+              disabled={isSimulating}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-md transition disabled:opacity-50"
+            >
+              {isSimulating ? (
+                <>
+                  <RefreshCwIcon className="h-3.5 w-3.5 animate-spin" />
+                  <span>Simulating...</span>
+                </>
+              ) : (
+                <>
+                  <PlayIcon className="h-3.5 w-3.5" />
+                  <span>Run Code</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -275,9 +332,9 @@ export function QuantumCodeViewer({
         </div>
       </div>
 
-      {/* 3. Code Viewport with Gutter & Syntax Highlight */}
-      <div className={`relative overflow-x-auto font-mono text-xs leading-relaxed ${isExpanded ? 'max-h-[700px]' : 'max-h-[440px]'} scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900`}>
-        <div className="flex min-w-full">
+      {/* 3. Code Viewport with Gutter (Editable or Syntax Display) */}
+      <div className="relative overflow-x-auto font-mono text-xs leading-relaxed max-h-[500px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+        <div className="flex min-w-full min-h-[260px]">
           {/* Line Numbers Gutter */}
           <div
             className="sticky left-0 select-none border-r border-zinc-800/80 bg-[#080b13] px-3.5 py-4 text-right font-mono text-[11px] text-zinc-600 space-y-0"
@@ -290,14 +347,25 @@ export function QuantumCodeViewer({
             ))}
           </div>
 
-          {/* Formatted Code Lines */}
-          <div className="flex-1 py-4 px-5 text-zinc-200 select-text overflow-x-auto">
-            {highlightedCode.map((lineContent, i) => (
-              <div key={i} className="h-5 leading-5 whitespace-pre font-mono">
-                {lineContent}
-              </div>
-            ))}
-          </div>
+          {/* Code Area */}
+          {editable ? (
+            <textarea
+              value={code}
+              onChange={(e) => onChange && onChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              spellCheck={false}
+              className="flex-1 py-4 px-5 text-emerald-300 font-mono text-xs leading-5 bg-transparent resize-none border-none outline-none focus:outline-none focus:ring-0 whitespace-pre overflow-x-auto min-h-[260px]"
+              placeholder="# Write or edit quantum circuit code here..."
+            />
+          ) : (
+            <div className="flex-1 py-4 px-5 text-zinc-200 select-text overflow-x-auto">
+              {highlightedCode.map((lineContent, i) => (
+                <div key={i} className="h-5 leading-5 whitespace-pre font-mono">
+                  {lineContent}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -305,7 +373,9 @@ export function QuantumCodeViewer({
       <div className="flex items-center justify-between border-t border-zinc-800/80 bg-[#080b13] px-4 py-2 text-[10px] font-mono text-zinc-500">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-zinc-400">AST Generated</span>
+          <span className="text-zinc-400">
+            {editable ? 'Live Simulator Active' : 'AST Generated'}
+          </span>
           <span>·</span>
           <span>Target: {currentMeta.name}</span>
         </div>

@@ -9,7 +9,10 @@ import {
   SparklesIcon,
   ArrowRightIcon,
   ShieldCheckIcon,
-  ZapIcon
+  ZapIcon,
+  CompassIcon,
+  LayersIcon,
+  AtomIcon
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -43,7 +46,6 @@ export function LearningPath({ onNavigate }: LearningPathProps) {
     onNavigate('lesson');
   };
 
-
   return (
     <div className="space-y-10">
       <PageHeader
@@ -51,86 +53,174 @@ export function LearningPath({ onNavigate }: LearningPathProps) {
         subtitle="Your complete 5-Chapter master track from Foundations (Start) to Capstone (Finish)."
       />
 
-      {/* Start-to-End Journey Overview Card */}
-      <Card className="p-6 sm:p-8 bg-gradient-to-br from-white to-emerald-500/5 dark:from-zinc-900 dark:to-emerald-950/20 border-emerald-500/30">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 items-center rounded-full bg-emerald-600 px-2.5 text-[11px] font-bold text-white">
-                5-CHAPTER MASTER TRACK
+      {/* Visually Appetizing Quantum Constellation Highway Card */}
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-[#070b14] via-[#0b1220] to-[#041a12] p-6 sm:p-9 shadow-2xl text-white">
+        {/* Ambient quantum background glow effects */}
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/3 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl space-y-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                <AtomIcon className="h-3.5 w-3.5 animate-spin" style={{ animationDuration: '10s' }} />
+                5-CHAPTER MASTER QUANTUM TRACK
               </span>
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs font-mono text-zinc-400">
                 {completedChaptersCount} of {totalChapters} Chapters Cleared
               </span>
             </div>
-            <h2 className="mt-2 font-display text-2xl font-bold text-zinc-900 dark:text-zinc-50 sm:text-3xl">
-              Course Roadmap & Milestone Journey
+
+            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              Interactive Quantum Progression Highway
             </h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
-              Follow the sequential quantum computing path from single qubits to multi-qubit Grover search. Rigorous adaptive gates enforce foundational concept mastery before downstream unlocks.
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              Step through sequential quantum computational tracks from single-qubit statevectors to multi-qubit Grover search. 
+              Prerequisite mastery gates enforce structural understanding before unlocking downstream topics.
             </p>
 
             {/* Strict Gate Status */}
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-500/20">
-                <ShieldCheckIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Rigorous Concept Importance Gating Active</span>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 rounded-xl bg-emerald-950/60 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 border border-emerald-500/30">
+                <ShieldCheckIcon className="h-4 w-4 text-emerald-400" />
+                <span>Bayesian Gating Active (≥ 70% Mastery Threshold)</span>
               </div>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                Prerequisites require ≥ 70% weighted accuracy to unlock downstream chapters.
+              <span className="text-[11px] text-zinc-400">
+                Validated via genuine Qiskit Aer simulation
               </span>
             </div>
           </div>
 
-          <div className="w-full lg:w-72 rounded-xl bg-white/80 p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 dark:bg-zinc-950/60">
-            <div className="flex justify-between text-xs font-semibold">
-              <span className="text-zinc-700 dark:text-zinc-300">Total Course Progress</span>
-              <span className="text-emerald-600 dark:text-emerald-400">{progressPercent}%</span>
+          {/* Progress Telemetry Card */}
+          <div className="w-full lg:w-80 rounded-2xl bg-zinc-900/80 p-5 shadow-2xl border border-zinc-700/60 backdrop-blur-md">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-zinc-300 flex items-center gap-1.5">
+                <SparklesIcon className="h-3.5 w-3.5 text-amber-400" />
+                Curriculum Mastery
+              </span>
+              <span className="text-emerald-400 font-mono text-sm font-bold">{progressPercent}%</span>
             </div>
-            <ProgressBar value={progressPercent} label="Overall roadmap progress" className="mt-2" />
-            <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-              {progressPercent === 100 ? 'Course Complete! Capstone Unlocked.' : `${totalChapters - completedChaptersCount} chapters to graduation.`}
-            </p>
+            
+            <div className="relative mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div 
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] transition-all duration-700"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+              <span>{completedChaptersCount}/{totalChapters} Chapters</span>
+              <span>{appState.progress.totalXP} Total CP Earned</span>
+            </div>
           </div>
         </div>
 
-        {/* Start to End Visual Highway */}
-        <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="grid grid-cols-5 gap-2 text-center text-xs">
-            {CURRICULUM.map((ch, idx) => {
-              const isDone = appState.progress.completedChapters.includes(ch.id);
-              const isCurrent = ch.id === appState.progress.activeChapterId;
-              const isChLocked = ch.number > 1 && !appState.progress.completedChapters.includes(`ch-${ch.number - 1}`) && !isDone;
-              return (
-                <div key={ch.id} className="flex flex-col items-center">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition shadow-sm ${
-                      isDone
-                        ? 'bg-emerald-600 text-white'
+        {/* VISUALLY APPETIZING ROUTE MAP PIPELINE */}
+        <div className="relative z-10 mt-10 pt-8 border-t border-zinc-800/80">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-400/80 mb-4 flex items-center gap-2">
+            <CompassIcon className="h-3.5 w-3.5" />
+            <span>Interactive Highway Route Map — Click any chapter to inspect modules</span>
+          </div>
+
+          {/* Stepped Route Highway Track */}
+          <div className="relative">
+            {/* Background connecting track beam */}
+            <div className="absolute top-6 left-6 right-6 h-1 bg-zinc-800 hidden md:block rounded-full" />
+            
+            {/* Active glowing progress segment */}
+            <div 
+              className="absolute top-6 left-6 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 hidden md:block rounded-full shadow-[0_0_12px_rgba(16,185,129,0.8)] transition-all duration-700"
+              style={{ 
+                width: `${Math.max(0, Math.min(100, ((Math.max(1, completedChaptersCount + 0.5)) / totalChapters) * 100))}%` 
+              }}
+            />
+
+            {/* Highway Nodes Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+              {CURRICULUM.map((ch, idx) => {
+                const isDone = appState.progress.completedChapters.includes(ch.id);
+                const isCurrent = ch.id === appState.progress.activeChapterId;
+                const isChLocked = ch.number > 1 && !appState.progress.completedChapters.includes(`ch-${ch.number - 1}`) && !isDone;
+                const isExpanded = expandedChapterId === ch.id;
+
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => setExpandedChapterId(ch.id)}
+                    className={`group text-left rounded-2xl p-4 transition-all duration-300 border flex flex-col justify-between min-h-[140px] ${
+                      isCurrent
+                        ? 'bg-zinc-900/90 border-emerald-500/80 shadow-[0_0_25px_rgba(16,185,129,0.25)] ring-2 ring-emerald-500/40'
+                        : isDone
+                        ? 'bg-zinc-950/70 border-emerald-600/40 hover:border-emerald-500/70'
                         : isChLocked
-                        ? 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500 border border-zinc-300 dark:border-zinc-700'
-                        : isCurrent
-                        ? 'bg-brand-600 text-white ring-2 ring-emerald-500'
-                        : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                        ? 'bg-zinc-950/40 border-zinc-800/80 opacity-60 hover:opacity-80'
+                        : 'bg-zinc-900/60 border-zinc-700/60 hover:border-zinc-500'
                     }`}
                   >
-                    {isDone ? (
-                      <CheckIcon className="h-4 w-4" />
-                    ) : isChLocked ? (
-                      <LockIcon className="h-3.5 w-3.5" />
-                    ) : (
-                      idx + 1
-                    )}
-                  </div>
-                  <span className="mt-1.5 font-bold text-[10px] text-zinc-800 dark:text-zinc-200 truncate w-full">
-                    {ch.isStart ? '1. START' : ch.isEnd ? '5. END' : `Ch ${idx + 1}`}
-                  </span>
-                </div>
-              );
-            })}
+                    <div className="flex items-center justify-between w-full">
+                      {/* Node Circle */}
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-xs font-bold transition-all ${
+                          isDone
+                            ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.6)]'
+                            : isCurrent
+                            ? 'bg-emerald-600 text-white ring-4 ring-emerald-400/30 animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.8)]'
+                            : isChLocked
+                            ? 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                            : 'bg-zinc-800 text-zinc-200'
+                        }`}
+                      >
+                        {isDone ? (
+                          <CheckIcon className="h-5 w-5 stroke-[2.5]" />
+                        ) : isChLocked ? (
+                          <LockIcon className="h-4 w-4" />
+                        ) : (
+                          `0${idx + 1}`
+                        )}
+                      </div>
+
+                      {/* Status Tag */}
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full font-mono ${
+                        isDone
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : isCurrent
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse'
+                          : isChLocked
+                          ? 'bg-zinc-800 text-zinc-500'
+                          : 'bg-zinc-800 text-zinc-400'
+                      }`}>
+                        {isDone ? 'Cleared' : isCurrent ? 'Active' : isChLocked ? 'Locked' : 'Queued'}
+                      </span>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        {ch.isStart ? 'Milestone 1 • Start' : ch.isEnd ? 'Milestone 5 • Finale' : `Milestone ${idx + 1}`}
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-white group-hover:text-emerald-300 transition truncate mt-0.5">
+                        {ch.title.split(':')[1]?.trim() || ch.title}
+                      </h4>
+                      <p className="text-[10px] text-zinc-400 truncate mt-0.5">
+                        {ch.topics.length} interactive modules
+                      </p>
+                    </div>
+
+                    {/* Active highlight indicator */}
+                    <div className="mt-2 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px]">
+                      <span className="text-zinc-500 group-hover:text-zinc-300 font-mono">
+                        {isExpanded ? 'Viewing' : 'Inspect'}
+                      </span>
+                      <ArrowRightIcon className={`h-3 w-3 text-zinc-500 transition-transform ${isExpanded ? 'rotate-90 text-emerald-400' : 'group-hover:translate-x-1'}`} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Chapters Timeline List */}
       <ol className="relative space-y-6 border-l-2 border-emerald-500/30 pl-6 sm:pl-8 ml-3 dark:border-emerald-500/20">
@@ -144,13 +234,13 @@ export function LearningPath({ onNavigate }: LearningPathProps) {
             <li key={chapter.id} className="relative">
               {/* Timeline Indicator Marker */}
               <span
-                className={`absolute -left-[37px] sm:-left-[45px] top-6 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 text-xs font-bold shadow-md ${
+                className={`absolute -left-[37px] sm:-left-[45px] top-6 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 text-xs font-bold shadow-md transition-all ${
                   isDone
-                    ? 'border-emerald-600 bg-emerald-600 text-white'
+                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]'
                     : isLocked
                     ? 'border-zinc-300 bg-zinc-100 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800'
                     : isCurrent
-                    ? 'border-emerald-500 bg-white text-emerald-700 dark:bg-zinc-900 dark:text-emerald-400 ring-2 ring-emerald-500/40'
+                    ? 'border-emerald-500 bg-white text-emerald-700 dark:bg-zinc-900 dark:text-emerald-400 ring-4 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.4)]'
                     : 'border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900'
                 }`}
               >
@@ -169,23 +259,23 @@ export function LearningPath({ onNavigate }: LearningPathProps) {
                   isLocked
                     ? 'border-zinc-200 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-950/30 opacity-80'
                     : isCurrent
-                    ? 'border-emerald-500 bg-white shadow-md dark:border-emerald-500/40 dark:bg-zinc-900 ring-1 ring-emerald-500/20'
-                    : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
+                    ? 'border-emerald-500 bg-white shadow-lg dark:border-emerald-500/50 dark:bg-zinc-900 ring-1 ring-emerald-500/20'
+                    : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 shadow-sm'
                 }`}
               >
                 <div
-                  className="flex min-h-[72px] w-full cursor-pointer items-center justify-between p-5 sm:p-6"
+                  className="flex min-h-[76px] w-full cursor-pointer items-center justify-between p-5 sm:p-6"
                   onClick={() => setExpandedChapterId(isExpanded ? '' : chapter.id)}
                 >
                   <div className="flex-1 pr-4">
                     <div className="flex flex-wrap items-center gap-2">
                       {chapter.isStart && (
-                        <span className="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        <span className="rounded bg-emerald-600 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-sm">
                           START HERE
                         </span>
                       )}
                       {chapter.isEnd && (
-                        <span className="rounded bg-purple-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        <span className="rounded bg-purple-600 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-sm">
                           CAPSTONE FINALE
                         </span>
                       )}
@@ -322,7 +412,7 @@ export function LearningPath({ onNavigate }: LearningPathProps) {
 
         {/* Culmination / Final Milestone Node */}
         <li className="relative">
-          <span className="absolute -left-[37px] sm:-left-[45px] top-4 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 border-purple-500 bg-purple-600 text-white shadow-md">
+          <span className="absolute -left-[37px] sm:-left-[45px] top-4 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 border-purple-500 bg-purple-600 text-white shadow-lg">
             <GraduationCapIcon className="h-4 w-4" />
           </span>
 

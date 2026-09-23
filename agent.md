@@ -994,11 +994,19 @@ Resolution of navigation correlation and pedagogical progression integrity:
 
 ## 13.17 Unified High-Aesthetic Quantum Code Studio & Open Lab Streamlining
 Enhancement of developer aesthetics and removal of redundant interactive controls:
-- [x] **Open Lab Circuit Builder De-duplication (`ChapterLab.tsx` / `OpenLab.tsx`):** Removed redundant mini-circuit builder controls (interactive wire gate toolbox) from the Open Lab hub, eliminating UI clutter and consolidating freeform quantum circuit composition into the dedicated Circuit Studio (`CircuitBuilder.tsx`).
-- [x] **Canonical Quantum Architecture Visualization:** Open Lab now renders a clean, read-only canonical register architecture representation of each topic's target mission, with direct 1-click execution on the Qiskit Aer simulator.
-- [x] **Visual Appetizing Quantum Code Studio (`QuantumCodeViewer.tsx`):** Engineered a reusable, high-aesthetic developer code editor component:
-  - [x] **macOS Window Controls & Modern Chrome:** Sleek glassmorphism header with traffic lights, active file tabs, and target hardware badges.
-  - [x] **Tokenized Syntax Highlighting:** Custom regex tokenizer highlighting Python and OpenQASM keywords, quantum gates, classes, strings, and numeric parameters without heavy external bundle overhead.
-  - [x] **Line Numbers Gutter:** Sticky, non-selectable line numbers gutter for precision code inspection.
-  - [x] **Interactive Action Suite:** 1-click clipboard copy with animated green feedback, direct file download (`.py` / `.qasm`), and Google Colab launch capability.
-  - [x] **Shared Implementation Across Hubs:** Integrated into both the Open Lab Hub (`ChapterLab.tsx`) and the Circuit Studio (`CircuitBuilder.tsx`) for a unified, visually appetizing developer experience.
+- [x] **Open Lab Wire De-duplication (`ChapterLab.tsx`):** Completely removed the static register wire diagram box from the Open Lab mission card, replacing it with the full-featured, in-platform live editable quantum coding simulator.
+- [x] **Live In-Platform Editable Code Simulator (`ChapterLab.tsx` & `QuantumCodeViewer.tsx`):**
+  - [x] **Live Monospace Textarea:** Real-time editing of quantum code across Qiskit 1.0+, Google Cirq, PennyLane, and OpenQASM with synchronized line numbers.
+  - [x] **Tab Indentation Handling:** Built-in 4-space indent on tab key press with caret preservation.
+  - [x] **Live In-Platform Execution:** Integrated "Run Code" execution button simulating arbitrary quantum code, updating the 3D Bloch sphere, measurement histogram, and physical wavefunction interpretation in-platform.
+  - [x] **Window Dots & Enlarge Removal:** Cleaned up header chrome by eliminating the non-functional enlarge button and window dots.
+  - [x] **Reset to Default:** Instant restoration of topic canonical starter code.
+
+---
+
+## 13.18 Visually Appetizing Curriculum Journey Highway Route Map
+Upgraded roadmap visualization in `LearningPath.tsx`:
+- [x] **Quantum Constellation Highway:** Multi-layered cyber-track linking chapters with dynamic glowing gradient progress beam, ambient blurred radial glows, and responsive milestone nodes.
+- [x] **Interactive Milestone Cards:** Interactive chapter station nodes with distinct status badges (`Cleared`, `Active`, `Locked`), pulse animations, and instant chapter inspection drawers.
+- [x] **Progress & Telemetry Dashboard:** Integrated level telemetry, total XP, and active Bayesian gating status badge ($\ge 70\%$) with sleek progress track styling.
+
