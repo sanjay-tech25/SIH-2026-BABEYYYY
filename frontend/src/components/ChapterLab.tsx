@@ -14,6 +14,7 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   DownloadIcon,
+  UploadCloudIcon,
   TerminalIcon,
   CpuIcon,
   CompassIcon
@@ -754,6 +755,24 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
               <ExternalLinkIcon className="h-3.5 w-3.5" />
               Launch in Google Colab
             </a>
+
+            <button
+              type="button"
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = `/notebooks/topics/${mission.id}_${mission.id.replace('lab-', 't')}.ipynb`;
+                a.download = `${mission.id}_${mission.id.replace('lab-', 't')}.ipynb`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.open('https://colab.research.google.com/#upload', '_blank');
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-500/20 transition"
+              title="Automatically downloads this notebook and opens the Colab upload window"
+            >
+              <UploadCloudIcon className="h-3.5 w-3.5" />
+              Direct Upload to Colab
+            </button>
           </div>
         </div>
 
