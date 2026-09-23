@@ -159,7 +159,13 @@ export function App() {
       case 'settings':
         return (
           <SectionErrorBoundary sectionName="System Settings" onNavigate={go}>
-            <Settings dark={dark} onToggleDark={() => stateStore.toggleDark()} />
+            <Settings
+              dark={dark}
+              onToggleDark={() => stateStore.toggleDark()}
+              onOpenAuth={() => setAuthOpen(true)}
+              onLogout={() => go('landing')}
+              onNavigate={go}
+            />
           </SectionErrorBoundary>
         );
       case 'lesson':

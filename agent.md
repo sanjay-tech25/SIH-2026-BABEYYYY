@@ -1010,3 +1010,22 @@ Upgraded roadmap visualization in `LearningPath.tsx`:
 - [x] **Interactive Milestone Cards:** Interactive chapter station nodes with distinct status badges (`Cleared`, `Active`, `Locked`), pulse animations, and instant chapter inspection drawers.
 - [x] **Progress & Telemetry Dashboard:** Integrated level telemetry, total XP, and active Bayesian gating status badge ($\ge 70\%$) with sleek progress track styling.
 
+---
+
+## 13.19 Comprehensive Settings, Personalization & Session Hub
+Expanded platform preferences, session management, and custom aesthetics in `Settings.tsx`:
+- [x] **Authentication & Session Hub:** Integrated current session card showing user avatar, email, institution, role (`LEARNER`/`INSTRUCTOR`), 1-click account switching via `AuthModal`, and session logout with landing redirection.
+- [x] **Personalisation & Pedagogical Personas:**
+  - [x] **Age Tier & Mathematical Rigor:** Young Learner (visual/conceptual), College Student (Dirac bra-ket formal math), and Working Professional (Qiskit 1.0+ code).
+  - [x] **Companion Mascot Personas:** Socratic Coach, Rigorous Academic, Supportive Mentor, and Silent Focus mode.
+  - [x] **Default Framework Selection:** Qiskit 1.0+, Google Cirq, Xanadu PennyLane, or OpenQASM 3.0.
+  - [x] **Daily Study Cadence:** Adjustable study goals (10m, 25m, 45m, 60m) with streak tracking.
+- [x] **Customization & UI Aesthetics:**
+  - [x] **Theme Engine:** Dark mode / Light mode with high-contrast toggle.
+  - [x] **Accent Color Palettes:** Quantum Emerald, Electric Indigo, Neon Cyan, Galactic Violet, and Solar Amber.
+  - [x] **3D Bloch Sphere Rendering Quality:** High, medium, and low rendering modes with auto-rotation toggle.
+  - [x] **Simulation Parameters:** Configurable default shots (512, 1024, 2048, 4096).
+- [x] **Auditory & Sensory Feedback:** Master sound toggle, audio volume slider, and sensory micro-cues on state collapse.
+- [x] **Data Sovereignty & Privacy:** Cryptographic JSON portfolio export, cloud telemetry synchronization toggle, and double-confirmation learning progress reset.
+
+

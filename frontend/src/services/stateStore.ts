@@ -24,6 +24,17 @@ export interface AppSettings {
   soundEnabled?: boolean;
   reducedMotion: boolean;
   mascotVerbosity: 'low' | 'normal' | 'high';
+  accentColor?: 'emerald' | 'indigo' | 'cyan' | 'violet' | 'amber';
+  defaultFramework?: 'qiskit' | 'cirq' | 'pennylane' | 'openqasm';
+  blochQuality?: 'high' | 'medium' | 'low';
+  autoRotateBloch?: boolean;
+  defaultShots?: number;
+  dailyGoalMinutes?: number;
+  studyReminders?: boolean;
+  cloudSync?: boolean;
+  audioVolume?: number;
+  highContrast?: boolean;
+  mascotPersonality?: 'socratic' | 'rigorous' | 'supportive' | 'silent';
 }
 
 export interface AssessmentAttemptRecord {
@@ -143,7 +154,18 @@ const DEFAULT_STATE: AppState = {
     dark: false,
     soundEnabled: true,
     reducedMotion: false,
-    mascotVerbosity: 'normal'
+    mascotVerbosity: 'normal',
+    accentColor: 'emerald',
+    defaultFramework: 'qiskit',
+    blochQuality: 'high',
+    autoRotateBloch: true,
+    defaultShots: 1024,
+    dailyGoalMinutes: 25,
+    studyReminders: true,
+    cloudSync: true,
+    audioVolume: 80,
+    highContrast: false,
+    mascotPersonality: 'socratic'
   },
   progress: {
     completedLessons: [],
