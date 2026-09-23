@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Rotate3dIcon, RefreshCwIcon, EyeIcon, CompassIcon } from 'lucide-react';
+import { Rotate3dIcon, RefreshCwIcon, CompassIcon } from 'lucide-react';
 
-interface QubitVector {
+export interface QubitVector {
   qubit_index: number;
   x: number;
   y: number;
@@ -10,25 +10,29 @@ interface QubitVector {
   color?: string;
 }
 
-interface BlochSphere3DProps {
-  vectors: QubitVector[];
-  numQubits: number;
+export interface BlochSphere3DProps {
+  vectors?: QubitVector[];
+  blochVectors?: QubitVector[]; // compatibility alias
+  numQubits?: number;
+  compact?: boolean;
+  size?: number;
 }
 
 const QUBIT_COLORS = ['#10b981', '#8b5cf6', '#06b6d4', '#f59e0b', '#ec4899'];
 
-export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
+export function BlochSphere3D({ vectors, blochVectors, numQubits = 1, compact = false, size }: BlochSphere3DProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedQubit, setSelectedQubit] = useState<number | 'all'>('all');
   const [isAutoRotate, setIsAutoRotate] = useState<boolean>(true);
-  const [rotation, setRotation] = useState<{ pitch: number; yaw: number }>({ pitch: 0.35, yaw: 0.6 });
+  const [rotation, setRotation] = useState<{ pitch: number; yaw: number }>({ pitch: 0.32, yaw: 0.65 });
   const [isDragging, setIsDragging] = useState(false);
   const [lastMouse, setLastMouse] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Fallback if no vectors passed yet
-  const activeVectors: QubitVector[] = (vectors && vectors.length > 0)
-    ? vectors
-    : Array.from({ length: numQubits }).map((_, idx) => ({
+  // Resolve active vectors
+  const rawVectors = (vectors && vectors.length > 0) ? vectors : (blochVectors && blochVectors.length > 0 ? blochVectors : []);
+  const activeVectors: QubitVector[] = rawVectors.length > 0
+    ? rawVectors
+    : Array.from({ length: Math.max(1, numQubits) }).map((_, idx) => ({
         qubit_index: idx,
         x: 0,
         y: 0,
@@ -77,12 +81,12 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
     const height = canvas.height;
     const cx = width / 2;
     const cy = height / 2;
-    const radius = Math.min(width, height) * 0.38;
+    // 0.35 leaves comfortable margins so labels (+X, +Y, |0>, |1>) never get clipped
+    const radius = Math.min(width, height) * 0.34;
 
     ctx.clearRect(0, 0, width, height);
 
-    // 3D Projection math
-    // World coordinates: X right, Y in/out, Z up
+    // 3D Projection math: X right, Y in/out, Z up
     const project = (x: number, y: number, z: number) => {
       // 1. Rotate yaw around Z-axis
       const cosY = Math.cos(rotation.yaw);
@@ -105,16 +109,16 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
     };
 
     // 1. Draw Glassmorphism Sphere Background
-    const grad = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 0.1, cx, cy, radius);
-    grad.addColorStop(0, 'rgba(16, 185, 129, 0.12)');
-    grad.addColorStop(0.7, 'rgba(6, 182, 212, 0.05)');
-    grad.addColorStop(1, 'rgba(15, 23, 42, 0.4)');
+    const grad = ctx.createRadialGradient(cx - radius * 0.25, cy - radius * 0.25, radius * 0.1, cx, cy, radius);
+    grad.addColorStop(0, 'rgba(16, 185, 129, 0.14)');
+    grad.addColorStop(0.6, 'rgba(6, 182, 212, 0.06)');
+    grad.addColorStop(1, 'rgba(15, 23, 42, 0.5)');
 
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.38)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -130,7 +134,7 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
         if (i === 0) ctx.moveTo(pt.px, pt.py);
         else ctx.lineTo(pt.px, pt.py);
       }
-      ctx.strokeStyle = zVal === 0 ? 'rgba(6, 182, 212, 0.5)' : 'rgba(148, 163, 184, 0.12)';
+      ctx.strokeStyle = zVal === 0 ? 'rgba(6, 182, 212, 0.55)' : 'rgba(148, 163, 184, 0.14)';
       ctx.lineWidth = zVal === 0 ? 1.5 : 1;
       ctx.setLineDash(zVal === 0 ? [] : [3, 4]);
       ctx.stroke();
@@ -159,10 +163,10 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
       ctx.setLineDash([]);
     });
 
-    // 4. Draw Main Axes (X, Y, Z)
+    // 4. Draw Main Axes (X, Y, Z) with boundary clamping
     const drawAxis = (x: number, y: number, z: number, label: string, color: string) => {
-      const start = project(-x * 1.15, -y * 1.15, -z * 1.15);
-      const end = project(x * 1.15, y * 1.15, z * 1.15);
+      const start = project(-x * 1.12, -y * 1.12, -z * 1.12);
+      const end = project(x * 1.12, y * 1.12, z * 1.12);
       ctx.beginPath();
       ctx.moveTo(start.px, start.py);
       ctx.lineTo(end.px, end.py);
@@ -170,23 +174,27 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Draw Axis Label
-      ctx.font = 'bold 11px Sora, sans-serif';
+      // Label with boundary safety margins
+      ctx.font = 'bold 10px Sora, sans-serif';
       ctx.fillStyle = color;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label, end.px + (x ? 12 : 0), end.py - (z ? 10 : 0));
+      const lx = Math.max(16, Math.min(width - 16, end.px + (x ? 12 : 0)));
+      const ly = Math.max(12, Math.min(height - 12, end.py - (z ? 10 : 0)));
+      ctx.fillText(label, lx, ly);
     };
 
-    drawAxis(1, 0, 0, '+X (|+⟩)', 'rgba(52, 211, 153, 0.7)');
-    drawAxis(0, 1, 0, '+Y (|i⟩)', 'rgba(34, 211, 238, 0.7)');
+    drawAxis(1, 0, 0, '+X (|+⟩)', 'rgba(52, 211, 153, 0.8)');
+    drawAxis(0, 1, 0, '+Y (|+i⟩)', 'rgba(34, 211, 238, 0.8)');
     drawAxis(0, 0, 1, '|0⟩ (Z)', '#ffffff');
 
     // South Pole Label
-    const southPole = project(0, 0, -1.2);
-    ctx.font = 'bold 11px Sora, sans-serif';
+    const southPole = project(0, 0, -1.18);
+    ctx.font = 'bold 10px Sora, sans-serif';
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText('|1⟩ (-Z)', southPole.px, southPole.py);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('|1⟩ (-Z)', southPole.px, Math.min(height - 12, southPole.py + 4));
 
     // 5. Draw Qubit State Vectors
     activeVectors.forEach((vec, idx) => {
@@ -206,35 +214,37 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
       ctx.moveTo(origin.px, origin.py);
       ctx.lineTo(tip.px, tip.py);
       ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2.5;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 8;
       ctx.stroke();
       ctx.shadowBlur = 0;
 
       // Glow Halo at Vector Tip
       ctx.beginPath();
-      ctx.arc(tip.px, tip.py, 6, 0, Math.PI * 2);
+      ctx.arc(tip.px, tip.py, 5, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 10;
       ctx.fill();
       ctx.shadowBlur = 0;
 
       // Outer Ring on Tip
       ctx.beginPath();
-      ctx.arc(tip.px, tip.py, 9, 0, Math.PI * 2);
+      ctx.arc(tip.px, tip.py, 7.5, 0, Math.PI * 2);
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
       // Qubit Badge Label
-      ctx.font = 'bold 11px monospace';
+      ctx.font = 'bold 10px monospace';
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
-      ctx.fillText(`q[${vec.qubit_index}]`, tip.px + 12, tip.py - 4);
+      const labelX = Math.min(width - 36, tip.px + 10);
+      const labelY = Math.max(12, Math.min(height - 12, tip.py - 4));
+      ctx.fillText(`q[${vec.qubit_index}]`, labelX, labelY);
 
-      // Draw equatorial projection lines
+      // Equatorial projection lines
       const projXY = project(nx, ny, 0);
       ctx.beginPath();
       ctx.setLineDash([2, 2]);
@@ -259,6 +269,59 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
   const phiDeg = Math.round(((phiRad >= 0 ? phiRad : (phiRad + Math.PI * 2)) * 180) / Math.PI);
   const prob0 = Math.round((Math.cos(thetaRad / 2) ** 2) * 100);
   const prob1 = 100 - prob0;
+
+  // COMPACT MODE: For embedding cleanly inside parent cards / side-by-side grids
+  if (compact) {
+    const canvasSize = size || 260;
+    return (
+      <div className="relative flex flex-col items-center justify-center w-full py-1">
+        <div className="relative flex items-center justify-center" style={{ width: canvasSize, height: canvasSize }}>
+          <canvas
+            ref={canvasRef}
+            width={canvasSize}
+            height={canvasSize}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="cursor-grab active:cursor-grabbing select-none rounded-xl"
+            style={{ width: canvasSize, height: canvasSize }}
+          />
+
+          {/* Controls overlay (spin & reset) */}
+          <div className="absolute top-1 right-1 flex items-center gap-1 z-10">
+            <button
+              type="button"
+              onClick={() => setIsAutoRotate(!isAutoRotate)}
+              className={`p-1 rounded-md text-[10px] transition ${
+                isAutoRotate
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700'
+              }`}
+              title={isAutoRotate ? 'Pause Rotation' : 'Auto Rotate'}
+            >
+              <Rotate3dIcon className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setRotation({ pitch: 0.32, yaw: 0.65 })}
+              className="p-1 rounded-md bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 text-[10px]"
+              title="Reset View"
+            >
+              <RefreshCwIcon className="h-3 w-3" />
+            </button>
+          </div>
+
+          {/* Ambient background glow ring */}
+          <div className="pointer-events-none absolute h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+        </div>
+      </div>
+    );
+  }
+
+  // FULL STANDALONE CARD MODE: For CircuitBuilder and ChapterLab
+  const canvasW = size || 360;
+  const canvasH = size ? Math.round(size * 0.85) : 300;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-950 p-5 text-white shadow-xl dark:border-zinc-800">
@@ -292,7 +355,7 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
           </button>
           <button
             type="button"
-            onClick={() => setRotation({ pitch: 0.35, yaw: 0.6 })}
+            onClick={() => setRotation({ pitch: 0.32, yaw: 0.65 })}
             className="flex items-center gap-1 rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-700"
             title="Reset to default angle"
           >
@@ -340,8 +403,8 @@ export function BlochSphere3D({ vectors, numQubits }: BlochSphere3DProps) {
       <div className="relative mt-2 flex items-center justify-center">
         <canvas
           ref={canvasRef}
-          width={380}
-          height={320}
+          width={canvasW}
+          height={canvasH}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

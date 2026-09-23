@@ -34,3 +34,18 @@ async def test_ai_provider_response():
     assert "answer" in resp
     assert len(resp["citations"]) > 0
     assert "superposition" in resp["citations"]
+    assert "analogy" in resp
+    assert "socratic_inquiry" in resp
+    assert "micro_action" in resp
+
+
+def test_ai_provider_diagnostic():
+    diag = AIProvider.generate_diagnostic_guidance(
+        topic_id="t1-1",
+        question_text="What is the probability of measuring state |1>?",
+        selected_option="-16/25 because amplitude is negative",
+        correct_option="16/25 by Born Rule"
+    )
+    assert diag["is_grounded"] is True
+    assert "Born Rule" in diag["remediation_topic"] or "Principle" in diag["remediation_topic"]
+    assert "socratic_inquiry" in diag

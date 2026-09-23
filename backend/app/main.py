@@ -187,9 +187,9 @@ async def root(request: Request):
         </div>
 
         <div class="actions">
-            <a href="{settings.API_V1_STR}/docs" class="btn btn-primary" target="_blank">📖 Swagger API Docs</a>
-            <a href="{settings.API_V1_STR}/redoc" class="btn btn-secondary" target="_blank">📘 ReDoc</a>
-            <a href="/health" class="btn btn-secondary" target="_blank">🩺 Health JSON</a>
+            <a href="{settings.API_V1_STR}/docs" class="btn btn-primary" target="_blank"> Swagger API Docs</a>
+            <a href="{settings.API_V1_STR}/redoc" class="btn btn-secondary" target="_blank"> ReDoc</a>
+            <a href="/health" class="btn btn-secondary" target="_blank"> Health JSON</a>
         </div>
     </div>
 </body>

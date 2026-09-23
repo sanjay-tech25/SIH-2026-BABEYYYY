@@ -14,6 +14,9 @@ from app.api.circuits import router as circuits_router
 from app.api.instructor import router as instructor_router
 from app.api.qubot import router as qubot_router
 from app.api.websocket import router as ws_router
+from app.api.v1.quantum_innovations_router import router as innovations_router
+
+from app.api.adaptive import router as adaptive_router
 
 api_router = APIRouter()
 
@@ -33,4 +36,7 @@ api_router.include_router(ai_tutor_router)
 api_router.include_router(circuits_router)
 api_router.include_router(instructor_router)
 api_router.include_router(ws_router)
+api_router.include_router(innovations_router)
+api_router.include_router(adaptive_router)
+
 

@@ -10,5 +10,8 @@ class MasteryLevel(str, Enum):
 
 class RecommendationAction(str, Enum):
     ADVANCE = "ADVANCE"          # Passed concept threshold -> Move to next DAG node
+    ADVANCE_WITH_SCAFFOLDING = "ADVANCE_WITH_SCAFFOLDING" # Proceed forward with adaptive hints
+    ADAPTIVE_BRIDGE = "ADAPTIVE_BRIDGE" # Forward bridging scaffold without mandatory retake
     REINFORCE = "REINFORCE"      # Moderate understanding -> 2 practice cards on weak subtopic
-    REVISE = "REVISE"            # Weak understanding -> Fall back to prerequisite concept node
+    REVISE = "REVISE"            # Historical fallback (now supports forward bridge)
+

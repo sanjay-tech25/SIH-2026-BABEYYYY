@@ -19,13 +19,15 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   SearchIcon,
-  ListFilterIcon
+  ListFilterIcon,
+  DownloadIcon,
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { apiClient } from '../services/apiClient';
 import { BlochSphere3D } from '../components/quantum/BlochSphere3D';
 import { HistogramChart } from '../components/quantum/HistogramChart';
+import { QuantumCodeGenerator, FRAMEWORKS, type QuantumFramework } from '../services/quantumCodeGenerator';
 
 type GateType = 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'RX' | 'RY' | 'RZ' | 'CX' | 'CZ' | 'SWAP';
 
@@ -58,10 +60,10 @@ const ALL_GATES: {
   glow: string 
 }[] = [
   // 1. Single Qubit Basic
-  { type: 'H', label: 'H', desc: 'Hadamard: Creates equal superposition (|0⟩ ➜ |+⟩)', category: 'Basic', color: 'bg-indigo-600', border: 'border-indigo-400', glow: 'shadow-[0_0_15px_rgba(99,102,241,0.5)]' },
-  { type: 'X', label: 'X', desc: 'Pauli-X: Bit flip NOT (|0⟩ ➜ |1⟩)', category: 'Basic', color: 'bg-emerald-600', border: 'border-emerald-400', glow: 'shadow-[0_0_15px_rgba(16,185,129,0.5)]' },
+  { type: 'H', label: 'H', desc: 'Hadamard: Creates equal superposition (|0⟩  |+⟩)', category: 'Basic', color: 'bg-indigo-600', border: 'border-indigo-400', glow: 'shadow-[0_0_15px_rgba(99,102,241,0.5)]' },
+  { type: 'X', label: 'X', desc: 'Pauli-X: Bit flip NOT (|0⟩  |1⟩)', category: 'Basic', color: 'bg-emerald-600', border: 'border-emerald-400', glow: 'shadow-[0_0_15px_rgba(16,185,129,0.5)]' },
   { type: 'Y', label: 'Y', desc: 'Pauli-Y: Bit + phase rotation around Y-axis', category: 'Basic', color: 'bg-teal-600', border: 'border-teal-400', glow: 'shadow-[0_0_15px_rgba(20,184,166,0.5)]' },
-  { type: 'Z', label: 'Z', desc: 'Pauli-Z: Phase flip (|1⟩ ➜ -|1⟩)', category: 'Basic', color: 'bg-sky-600', border: 'border-sky-400', glow: 'shadow-[0_0_15px_rgba(14,165,233,0.5)]' },
+  { type: 'Z', label: 'Z', desc: 'Pauli-Z: Phase flip (|1⟩  -|1⟩)', category: 'Basic', color: 'bg-sky-600', border: 'border-sky-400', glow: 'shadow-[0_0_15px_rgba(14,165,233,0.5)]' },
 
   // 2. Phase & Rotations
   { type: 'S', label: 'S', desc: 'Phase S: 90° (π/2) rotation around Z-axis', category: 'Phase & Rotations', color: 'bg-cyan-600', border: 'border-cyan-400', glow: 'shadow-[0_0_15px_rgba(6,182,212,0.5)]' },
@@ -143,7 +145,7 @@ const PRESETS: PresetItem[] = [
   {
     id: 'teleportation',
     name: 'Quantum Teleportation',
-    formula: '|ψ⟩ ➜ Alice ➜ Bob',
+    formula: '|ψ⟩  Alice  Bob',
     desc: 'Transfers an unknown qubit state |ψ⟩ from qubit 0 to qubit 2 using shared Bell pair entanglement.',
     category: 'Protocols',
     badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
@@ -218,6 +220,7 @@ export function CircuitBuilder() {
   const [simulating, setSimulating] = useState(false);
   const [simProgress, setSimProgress] = useState(0);
   const [simResult, setSimResult] = useState<any>(null);
+  const [selectedFramework, setSelectedFramework] = useState<QuantumFramework>('qiskit');
   const [copiedCode, setCopiedCode] = useState(false);
   const [colabLoading, setColabLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -316,38 +319,28 @@ export function CircuitBuilder() {
     }
   };
 
-  const generateQiskitCode = () => {
-    let code = `from qiskit import QuantumCircuit, transpile\nfrom qiskit_aer import AerSimulator\nimport numpy as np\n\n`;
-    code += `# Initialize ${numQubits}-qubit quantum circuit\n`;
-    code += `qc = QuantumCircuit(${numQubits}, ${numQubits})\n\n`;
-
-    const sorted = [...gates].sort((a, b) => a.step - b.step);
-    sorted.forEach((g) => {
-      const q = g.qubit;
-      const c = g.control ?? (q === 0 ? 1 : 0);
-      if (g.type === 'H') code += `qc.h(${q})\n`;
-      else if (g.type === 'X') code += `qc.x(${q})\n`;
-      else if (g.type === 'Y') code += `qc.y(${q})\n`;
-      else if (g.type === 'Z') code += `qc.z(${q})\n`;
-      else if (g.type === 'S') code += `qc.s(${q})\n`;
-      else if (g.type === 'T') code += `qc.t(${q})\n`;
-      else if (g.type === 'RX') code += `qc.rx(np.pi / 2, ${q})\n`;
-      else if (g.type === 'RY') code += `qc.ry(np.pi / 2, ${q})\n`;
-      else if (g.type === 'RZ') code += `qc.rz(np.pi / 2, ${q})\n`;
-      else if (g.type === 'CX') code += `qc.cx(${c}, ${q})\n`;
-      else if (g.type === 'CZ') code += `qc.cz(${c}, ${q})\n`;
-      else if (g.type === 'SWAP') code += `qc.swap(${c}, ${q})\n`;
-    });
-
-    code += `\n# Measure all qubits into classical registers\nqc.measure(range(${numQubits}), range(${numQubits}))\n\n`;
-    code += `# Transpile and execute on Qiskit Aer backend\nsimulator = AerSimulator()\ncompiled_circuit = transpile(qc, simulator)\njob = simulator.run(compiled_circuit, shots=${shots})\nresult = job.result()\ncounts = result.get_counts()\nprint("Measurement Counts Distribution:", counts)\n`;
-    return code;
+  const generateFrameworkCode = (fw: QuantumFramework = selectedFramework) => {
+    return QuantumCodeGenerator.generate(fw, numQubits, gates, shots);
   };
 
   const copyCode = () => {
-    navigator.clipboard.writeText(generateQiskitCode());
+    navigator.clipboard.writeText(generateFrameworkCode(selectedFramework));
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const downloadCode = () => {
+    const code = generateFrameworkCode(selectedFramework);
+    const fwMeta = FRAMEWORKS.find((f) => f.id === selectedFramework) || FRAMEWORKS[0];
+    const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `quantum_circuit_${selectedFramework}.${fwMeta.fileExtension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const openInColab = async () => {
@@ -477,7 +470,7 @@ export function CircuitBuilder() {
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 rounded-md bg-zinc-800 px-2 py-1 text-[10px] font-semibold text-emerald-400 hover:bg-emerald-600 hover:text-zinc-950 transition">
-                                  Drop ➔
+                                  Drop 
                                 </span>
                               )}
                             </div>
@@ -930,41 +923,129 @@ export function CircuitBuilder() {
         </div>
       )}
 
-      {/* Generated Qiskit Code Preview */}
-      <Card className="p-6 border-zinc-800 bg-zinc-950/90 shadow-xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
-              <CodeIcon className="h-4 w-4" />
+      {/* Multi-Framework Quantum Code Studio (Qiskit, Cirq, PennyLane, OpenQASM) */}
+      <Card className="p-6 border-zinc-800 bg-zinc-950/90 shadow-2xl">
+        {/* Studio Header Bar */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-zinc-800 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+              <CodeIcon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-display text-base font-bold text-zinc-100">
-                Generated Qiskit (Python) Code
-              </h3>
-              <p className="text-[11px] text-zinc-400">Synthesized transpiled circuit for IBM Quantum Hardware</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-base font-bold text-zinc-100">
+                  Multi-Framework Quantum Code Studio
+                </h3>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                  Real-Time AST Synthesis
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400">
+                Transpile your visual quantum circuit seamlessly across 4 production quantum frameworks
+              </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={copyCode}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition shadow"
-          >
-            {copiedCode ? (
-              <>
-                <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
-                Copied to Clipboard!
-              </>
-            ) : (
-              <>
-                <CopyIcon className="h-3.5 w-3.5" />
-                Copy Python Script
-              </>
-            )}
-          </button>
+
+          {/* Framework Switcher Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-zinc-900 p-1.5 border border-zinc-800">
+            {FRAMEWORKS.map((fw) => {
+              const isSelected = selectedFramework === fw.id;
+              return (
+                <button
+                  key={fw.id}
+                  type="button"
+                  onClick={() => setSelectedFramework(fw.id)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                    isSelected
+                      ? 'bg-zinc-800 text-emerald-400 shadow-md ring-1 ring-emerald-500/30'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <span>{fw.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <pre className="mt-4 overflow-x-auto rounded-xl bg-zinc-900/90 p-4 font-mono text-xs leading-relaxed text-emerald-400 border border-zinc-800 shadow-inner">
-          {generateQiskitCode()}
-        </pre>
+
+        {/* Selected Framework Context & Actions */}
+        {(() => {
+          const currentMeta = FRAMEWORKS.find((f) => f.id === selectedFramework) || FRAMEWORKS[0];
+          return (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-zinc-900/60 p-3.5 border border-zinc-800/80">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className={`rounded px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border ${currentMeta.badgeColor}`}>
+                    {currentMeta.vendor}
+                  </span>
+                  <a
+                    href={currentMeta.documentationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-emerald-400 transition"
+                  >
+                    Official Docs
+                    <ExternalLinkIcon className="h-3 w-3" />
+                  </a>
+                </div>
+                <p className="text-xs text-zinc-400">{currentMeta.tagline}</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Copy Button */}
+                <button
+                  type="button"
+                  onClick={copyCode}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition shadow"
+                >
+                  {copiedCode ? (
+                    <>
+                      <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <CopyIcon className="h-3.5 w-3.5" />
+                      Copy Code
+                    </>
+                  )}
+                </button>
+
+                {/* Download Button */}
+                <button
+                  type="button"
+                  onClick={downloadCode}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition shadow"
+                >
+                  <DownloadIcon className="h-3.5 w-3.5 text-emerald-400" />
+                  Download .{currentMeta.fileExtension}
+                </button>
+
+                {/* Open in Colab */}
+                <button
+                  type="button"
+                  onClick={openInColab}
+                  disabled={colabLoading}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition shadow"
+                >
+                  <ExternalLinkIcon className="h-3.5 w-3.5" />
+                  {colabLoading ? 'Launching...' : 'Run in Colab'}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Code View Window */}
+        <div className="relative mt-4 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/90 shadow-inner">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/60 px-4 py-2 text-[11px] font-mono text-zinc-400">
+            <span>circuit_{selectedFramework}.{FRAMEWORKS.find(f => f.id === selectedFramework)?.fileExtension}</span>
+            <span>UTF-8 • Synthesized AST</span>
+          </div>
+          <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-emerald-400 select-all">
+            {generateFrameworkCode(selectedFramework)}
+          </pre>
+        </div>
       </Card>
 
       {/* Real-time Toast Feedback Notification */}

@@ -81,7 +81,7 @@ class QUBOTDecisionEngine:
             priority = QUBOTPriority.CRITICAL
             cooldown_seconds = 60
             if is_young:
-                text = "Hold on, Quantum Pilot! 🛑 2 non-stop sessions! Brain recharge required now!"
+                text = "Hold on, Quantum Pilot!  2 non-stop sessions! Brain recharge required now!"
             elif is_adult:
                 text = "Two consecutive focus sessions logged. Mandatory 5-minute break in effect."
             else:
@@ -95,7 +95,7 @@ class QUBOTDecisionEngine:
             priority = QUBOTPriority.HIGH
             cooldown_seconds = 60
             if is_young:
-                text = "Mission complete! 🌟 A 5-minute snack & stretch break is recommended!"
+                text = "Mission complete!  A 5-minute snack & stretch break is recommended!"
             elif is_adult:
                 text = "Focus session logged. 5-minute cognitive rest suggested."
             else:
@@ -123,7 +123,7 @@ class QUBOTDecisionEngine:
             priority = QUBOTPriority.MEDIUM
             cooldown_seconds = 30
             if is_young:
-                text = "Take a breath, space cadet! 🚀 Read the question carefully before picking!"
+                text = "Take a breath, space cadet!  Read the question carefully before picking!"
             elif is_adult:
                 text = "Rapid submission detected. Take a moment to analyze the question requirements."
             else:
@@ -136,7 +136,7 @@ class QUBOTDecisionEngine:
             intent = QUBOTIntent.WELCOME
             priority = QUBOTPriority.LOW
             if is_young:
-                text = "Welcome back, Space Explorer! 🚀 Ready for today's quantum mission?"
+                text = "Welcome back, Space Explorer!  Ready for today's quantum mission?"
             elif is_adult:
                 text = "Welcome back. Resuming your quantum curriculum track."
             else:
@@ -149,7 +149,7 @@ class QUBOTDecisionEngine:
             intent = QUBOTIntent.CORRECT_ANSWER
             priority = QUBOTPriority.NORMAL
             if is_young:
-                text = f"WOOHOO! 🎉 You mastered {concept}! Next quantum secret unlocked!"
+                text = f"WOOHOO!  You mastered {concept}! Next quantum secret unlocked!"
             elif is_adult:
                 text = f"Concept '{concept}' validated ({score}%). Prerequisite satisfied."
             else:
@@ -162,11 +162,13 @@ class QUBOTDecisionEngine:
             intent = QUBOTIntent.INCORRECT_ANSWER
             priority = QUBOTPriority.NORMAL
             if is_young:
-                text = f"You're super close! 💡 Let's check the visual flashcards for {concept} together."
+                text = f"Hold your thrusters, Space Cadet!  Quantum physics needs strong foundations! Advancement paused until we power up with this visual mission!"
             elif is_adult:
-                text = f"Mastery threshold not met for {concept}. Targeted revision recommended."
+                text = f"Mastery threshold not met for '{concept}'. Progression is locked until compulsory differentiated remediation is validated."
             else:
-                text = f"Good effort. Let's revisit the key foundations of {concept}."
+                text = f"Advancement paused on '{concept}'. Quantum mechanics doesn't forgive skipped foundations! I've loaded a differentiated visual breakdown for you before your retake."
+
+
 
         elif event_type in ["WINDOW_BLUR", "TAB_SWITCH", "USER_INACTIVE", "LONG_INACTIVITY"]:
             if not QUBOTCooldownManager.can_trigger(user_id, "DISTRACTION_REMINDER"):
@@ -179,7 +181,7 @@ class QUBOTDecisionEngine:
                 intent = QUBOTIntent.SESSION_RESUME
                 priority = QUBOTPriority.NORMAL
                 if is_young:
-                    text = "Stepped away? QUBOT is keeping your place ready whenever you're back! 🛸"
+                    text = "Stepped away? QUBOT is keeping your place ready whenever you're back! "
                 elif is_adult:
                     text = "Session paused. Ready to resume when you are."
                 else:
@@ -192,7 +194,7 @@ class QUBOTDecisionEngine:
             intent = QUBOTIntent.ENCOURAGE
             priority = QUBOTPriority.LOW
             if is_young:
-                text = "Circuit executed! ⚛️ Statevector calculated in the quantum realm!"
+                text = "Circuit executed!  Statevector calculated in the quantum realm!"
             elif is_adult:
                 text = "Qiskit simulation complete. Statevector & Bloch coordinates updated."
             else:
@@ -205,7 +207,7 @@ class QUBOTDecisionEngine:
             animation = QUBOTAnimation.CELEBRATE.value
             intent = QUBOTIntent.MILESTONE
             priority = QUBOTPriority.HIGH
-            text = f"🏆 LEVEL UP! You reached Level {lvl}!" if is_young else f"Level {lvl} achieved. New track unlocked."
+            text = f" LEVEL UP! You reached Level {lvl}!" if is_young else f"Level {lvl} achieved. New track unlocked."
 
         # Build Response Envelope
         envelope = QubotResponseEnvelope(

@@ -170,8 +170,8 @@ export function HistogramChart({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-emerald-300 font-semibold">
-            +{xpEarned} XP Earned
+          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-emerald-300 font-semibold" title="Competency Points">
+            +{xpEarned} CP Earned
           </span>
         </div>
       </div>

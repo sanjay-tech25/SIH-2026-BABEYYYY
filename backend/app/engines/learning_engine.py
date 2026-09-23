@@ -46,9 +46,14 @@ class LearningEngine:
     def get_unlocked_concepts(
         all_concepts: List[str],
         prerequisites: List[Dict[str, str]],
-        mastered_concepts: Set[str]
+        mastered_concepts: Set[str],
+        allow_soft_prerequisites: bool = False
     ) -> List[str]:
-        """Returns list of concept IDs whose prerequisites are fully satisfied."""
+        """Returns list of concept IDs whose prerequisites are satisfied or softly scaffolded.
+        
+        If allow_soft_prerequisites is True, learners are not hard-blocked by unmastered prerequisites,
+        enabling continuous forward progression without mandatory retakes.
+        """
         prereq_map = defaultdict(set)
         for edge in prerequisites:
             prereq_map[edge["concept_id"]].add(edge["prerequisite_id"])
@@ -58,7 +63,47 @@ class LearningEngine:
             if cid in mastered_concepts:
                 continue
             required = prereq_map.get(cid, set())
-            if required.issubset(mastered_concepts):
+            if required.issubset(mastered_concepts) or allow_soft_prerequisites:
                 unlocked.append(cid)
 
         return unlocked
+
+    @classmethod
+    def get_adaptive_learning_path(
+        cls,
+        all_concepts: List[str],
+        prerequisites: List[Dict[str, str]],
+        mastered_concepts: Set[str],
+        in_progress_concepts: Set[str] = None
+    ) -> Dict[str, Any]:
+        """Generates a complete adaptive learning path showing fully unlocked, scaffolded, and next-step nodes."""
+        in_progress = in_progress_concepts or set()
+        topo_order = cls.topological_sort_concepts(all_concepts, prerequisites)
+        strict_unlocked = set(cls.get_unlocked_concepts(all_concepts, prerequisites, mastered_concepts, allow_soft_prerequisites=False))
+        all_accessible = set(cls.get_unlocked_concepts(all_concepts, prerequisites, mastered_concepts, allow_soft_prerequisites=True))
+
+        scaffolded = [cid for cid in all_accessible if cid not in strict_unlocked]
+
+        # Determine best immediate forward recommendation
+        next_concept = None
+        for cid in topo_order:
+            if cid not in mastered_concepts:
+                next_concept = cid
+                break
+
+        # Rigorous Gating: nodes with unmet prerequisites are strictly locked
+        locked_nodes = [cid for cid in all_concepts if cid not in mastered_concepts and cid not in strict_unlocked]
+        can_advance = (next_concept in strict_unlocked) if next_concept else True
+
+        return {
+            "topological_sequence": topo_order,
+            "mastered_concepts": list(mastered_concepts),
+            "in_progress_concepts": list(in_progress),
+            "strictly_unlocked": list(strict_unlocked),
+            "locked_nodes": locked_nodes,
+            "recommended_next_concept": next_concept,
+            "can_advance_freely": can_advance,
+            "requires_prerequisite_mastery": len(locked_nodes) > 0
+        }
+
+

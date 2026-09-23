@@ -26,7 +26,7 @@ class MascotEventEngine:
         elif event_type == "QUIZ_PASSED":
             state = MascotState.CELEBRATING.value
             score = metadata.get("score", 100)
-            dialogue = f"Assessment passed ({score}%). Next node unlocked." if is_adult else f"Brilliant job! You mastered {concept}! 🎉"
+            dialogue = f"Assessment passed ({score}%). Next node unlocked." if is_adult else f"Brilliant job! You mastered {concept}! "
 
         elif event_type == "QUIZ_FAILED":
             state = MascotState.ENCOURAGING.value
@@ -51,7 +51,7 @@ class MascotEventEngine:
         elif event_type == "LEVEL_UP":
             state = MascotState.CELEBRATING.value
             lvl = metadata.get("new_level", 2)
-            dialogue = f"Level {lvl} achieved." if is_adult else f"🎉 LEVEL UP! You've reached Level {lvl}! Keep rocking!"
+            dialogue = f"Level {lvl} achieved." if is_adult else f" LEVEL UP! You've reached Level {lvl}! Keep rocking!"
 
         else:
             state = MascotState.IDLE.value

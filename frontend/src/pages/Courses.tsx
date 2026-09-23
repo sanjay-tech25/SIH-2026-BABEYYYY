@@ -1,131 +1,139 @@
-import React, { useState } from 'react';
-import { ArrowRightIcon, ClockIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowRightIcon, CheckIcon } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { StatusChip } from '../components/ui/StatusChip';
 import { PageHeader } from '../components/ui/PageHeader';
-import { courses, type Course, type ViewId } from '../data/appData';
+import { CURRICULUM } from '../data/curriculumData';
+import { stateStore, type AppState } from '../services/stateStore';
+import type { ViewId } from '../data/appData';
 
-type CoursesProps = {
+interface CoursesProps {
   onNavigate: (id: ViewId) => void;
-};
-
-const filters = [
-{ id: 'all', label: 'All' },
-{ id: 'in-progress', label: 'In progress' },
-{ id: 'done', label: 'Finished' },
-{ id: 'not-started', label: 'Not started' }] as
-const;
-
-type FilterId = (typeof filters)[number]['id'];
-
-function statusChip(course: Course) {
-  if (course.status === 'done') return <StatusChip tone="done">Finished</StatusChip>;
-  if (course.status === 'in-progress') return <StatusChip tone="active">In progress</StatusChip>;
-  return <StatusChip tone="locked">Not started</StatusChip>;
 }
 
 export function Courses({ onNavigate }: CoursesProps) {
-  const [filter, setFilter] = useState<FilterId>('all');
-  const visible = filter === 'all' ? courses : courses.filter((c) => c.status === filter);
+  const [appState, setAppState] = useState<AppState>(stateStore.getState());
+
+  useEffect(() => {
+    return stateStore.subscribe(setAppState);
+  }, []);
+
+  const handleSelectTopic = (chapterId: string, topicId: string) => {
+    stateStore.setActiveLesson(chapterId, topicId);
+    onNavigate('lesson');
+  };
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Your courses"
-        subtitle="Four courses tied to your quantum computing goal." />
-      
+        title="Curriculum Chapters & Syllabi"
+        subtitle="The complete 5-Chapter curriculum from foundational quantum states to advanced algorithms."
+      />
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter courses">
-        {filters.map((f) => {
-          const active = f.id === filter;
+      <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-2">
+        {CURRICULUM.map((chapter) => {
+          const isDone = appState.progress.completedChapters.includes(chapter.id);
+          const isCurrent = chapter.id === appState.progress.activeChapterId;
+          const completedTopicsInChapter = chapter.topics.filter(t =>
+            appState.progress.completedLessons.includes(t.id)
+          ).length;
+          const chapterPercent = Math.round((completedTopicsInChapter / chapter.topics.length) * 100);
+
           return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              aria-pressed={active}
-              className={`min-h-[44px] rounded-xl border px-4 text-body transition-colors ${
-              active ?
-              'border-brand-600 bg-brand-600 font-medium text-white' :
-              'border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'}`
-              }>
-              
-              {f.label}
-            </button>);
-
-        })}
-      </div>
-
-      {visible.length === 0 ?
-      <Card className="p-10 text-center">
-          <p className="font-display text-h3 font-semibold text-zinc-900 dark:text-zinc-50">
-            Nothing here yet
-          </p>
-          <p className="mx-auto mt-2 max-w-sm text-body text-zinc-600 dark:text-zinc-400">
-            No courses match this filter.
-          </p>
-          <Button variant="secondary" className="mt-6" onClick={() => setFilter('all')}>
-            Show all courses
-          </Button>
-        </Card> :
-
-      <ul className="space-y-4">
-          {visible.map((course) =>
-        <Card as="li" key={course.id} className="p-6">
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                <div className="max-w-2xl">
-                  <div className="flex flex-wrap items-center gap-3">
-                    {statusChip(course)}
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                      {course.level}
+            <Card key={chapter.id} className="flex flex-col p-6 sm:p-7 justify-between">
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {chapter.isStart && (
+                      <span className="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        START
+                      </span>
+                    )}
+                    {chapter.isEnd && (
+                      <span className="rounded bg-purple-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        FINISH
+                      </span>
+                    )}
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      Chapter {chapter.number}
                     </span>
                   </div>
-                  <h2 className="mt-3 font-display text-h2 font-semibold text-zinc-900 dark:text-zinc-50">
-                    {course.title}
-                  </h2>
-                  <p className="mt-2 text-body text-zinc-600 dark:text-zinc-400">
-                    {course.summary}
-                  </p>
+
+                  {isDone ? (
+                    <StatusChip tone="done">Completed</StatusChip>
+                  ) : isCurrent ? (
+                    <StatusChip tone="active">In Progress</StatusChip>
+                  ) : (
+                    <StatusChip tone="locked">Upcoming</StatusChip>
+                  )}
                 </div>
+
+                <h3 className="mt-3 font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                  {chapter.title}
+                </h3>
+                <p className="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  {chapter.subtitle}
+                </p>
+                <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  {chapter.summary}
+                </p>
+
+                {/* Progress bar */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                    <span>{completedTopicsInChapter} of {chapter.topics.length} topics finished</span>
+                    <span>{chapterPercent}%</span>
+                  </div>
+                  <ProgressBar value={chapterPercent} label="Chapter progress" className="mt-1.5" />
+                </div>
+
+                {/* Topic quick list */}
+                <div className="mt-5 space-y-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                  {chapter.topics.map((t) => {
+                    const topicDone = appState.progress.completedLessons.includes(t.id);
+                    return (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between text-xs py-1 text-zinc-700 dark:text-zinc-300"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          {topicDone ? (
+                            <CheckIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0" />
+                          )}
+                          <span className="truncate">{t.number}: {t.title}</span>
+                        </span>
+                        <span className="text-[10px] text-zinc-400 shrink-0 ml-2">{t.minutes} min</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                 <Button
-              variant={course.status === 'in-progress' ? 'primary' : 'secondary'}
-              className="shrink-0"
-              onClick={() => onNavigate('lesson')}>
-              
-                  {course.status === 'done' ?
-              'Review course' :
-              course.status === 'in-progress' ?
-              'Continue' :
-              'Start course'}
-                  <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                  variant="secondary"
+                  className="text-xs h-9"
+                  onClick={() => onNavigate('path')}
+                >
+                  View in Journey
+                </Button>
+                <Button
+                  className="text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => handleSelectTopic(chapter.id, chapter.topics[0].id)}
+                >
+                  {isDone ? 'Review Chapter' : 'Continue Chapter'}
+                  <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               </div>
-
-              <div className="mt-6 max-w-md">
-                <div className="flex items-baseline justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                  <span>
-                    {course.lessonsDone} of {course.lessonsTotal} lessons
-                  </span>
-                  {course.minutesLeft > 0 &&
-              <span className="inline-flex items-center gap-1">
-                      <ClockIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                      {course.minutesLeft} min left
-                    </span>
-              }
-                </div>
-                <ProgressBar
-              value={course.lessonsDone / course.lessonsTotal * 100}
-              label={`${course.title} progress`}
-              tone={course.status === 'not-started' ? 'muted' : 'solid'}
-              className="mt-2" />
-            
-              </div>
             </Card>
-        )}
-        </ul>
-      }
-    </div>);
-
+          );
+        })}
+      </div>
+    </div>
+  );
 }

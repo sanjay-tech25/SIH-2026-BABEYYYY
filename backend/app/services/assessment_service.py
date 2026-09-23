@@ -145,11 +145,13 @@ class AssessmentService:
             if prior and prior.concept:
                 primary_concept_name = prior.concept.name
 
-        # Calculate Recommendation
+        # Calculate Recommendation with concept-importance weighting and foundational breach check
         rec = RecommendationEngine.determine_next_action(
             concept_name=primary_concept_name,
-            mastery_score=new_mastery_score
+            mastery_score=new_mastery_score,
+            foundational_breach=eval_result.get("foundational_breach", False)
         )
+
 
         # Award XP
         await self.progress_repo.add_xp_transaction(

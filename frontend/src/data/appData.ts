@@ -5,9 +5,10 @@ export type NavId =
   | 'circuits'
   | 'openlab'
   | 'assessments'
-  | 'tutor'
   | 'progress'
   | 'achievements'
+  | 'profile'
+  | 'instructor'
   | 'settings';
 
 export type ViewId = NavId | 'landing' | 'onboarding' | 'lesson' | 'practice' | 'results';
@@ -65,12 +66,12 @@ export type Skill = {
 };
 
 export const learner = {
-  name: 'Aarav',
-  level: 4,
-  xp: 3450,
-  xpTarget: 4500,
+  name: 'Manoj',
+  level: 1,
+  xp: 0,
+  xpTarget: 500,
   goal: 'Quantum computing fundamentals',
-  streakDays: 7
+  streakDays: 0
 };
 
 export const courses: Course[] = [
@@ -78,31 +79,31 @@ export const courses: Course[] = [
   id: 'c1',
   title: 'Qubits & the Bloch sphere',
   summary: 'Build an intuition for superposition using geometry instead of algebra.',
-  lessonsDone: 7,
+  lessonsDone: 0,
   lessonsTotal: 12,
-  minutesLeft: 55,
-  level: 'Intermediate',
+  minutesLeft: 120,
+  level: 'Beginner',
   status: 'in-progress'
 },
 {
   id: 'c2',
   title: 'Linear algebra for quantum',
   summary: 'Vectors, inner products and unitary matrices, taught through worked examples.',
-  lessonsDone: 14,
+  lessonsDone: 0,
   lessonsTotal: 14,
-  minutesLeft: 0,
+  minutesLeft: 140,
   level: 'Beginner',
-  status: 'done'
+  status: 'not-started'
 },
 {
   id: 'c3',
   title: 'Neural networks from scratch',
   summary: 'Backpropagation, loss curves and regularisation with hands-on notebooks.',
-  lessonsDone: 5,
+  lessonsDone: 0,
   lessonsTotal: 16,
-  minutesLeft: 140,
+  minutesLeft: 160,
   level: 'Intermediate',
-  status: 'in-progress'
+  status: 'not-started'
 },
 {
   id: 'c4',
@@ -117,7 +118,7 @@ export const courses: Course[] = [
 
 
 export const todaysPlan: PlanItem[] = [
-{ id: 'p1', title: 'Phase gates and rotations', kind: 'Lesson', minutes: 12, done: true },
+{ id: 'p1', title: 'Phase gates and rotations', kind: 'Lesson', minutes: 12, done: false },
 { id: 'p2', title: 'Practise 8 Bloch sphere questions', kind: 'Practice', minutes: 10, done: false },
 { id: 'p3', title: 'Revisit inner products', kind: 'Review', minutes: 6, done: false }];
 
@@ -128,8 +129,8 @@ export const pathSteps: PathStep[] = [
   index: 1,
   title: 'Linear algebra & complex numbers',
   summary: 'Vectors, bases and complex amplitudes.',
-  score: 96,
-  state: 'mastered',
+  score: 0,
+  state: 'current',
   lessons: ['Vector spaces', 'Complex amplitudes', 'Inner products']
 },
 {
@@ -137,8 +138,8 @@ export const pathSteps: PathStep[] = [
   index: 2,
   title: 'Probability & unitary operators',
   summary: 'Measurement outcomes and norm preservation.',
-  score: 91,
-  state: 'mastered',
+  score: 0,
+  state: 'upcoming',
   lessons: ['Probability review', 'Unitary matrices', 'Measurement basics']
 },
 {
@@ -146,24 +147,24 @@ export const pathSteps: PathStep[] = [
   index: 3,
   title: 'Qubits & the Bloch sphere',
   summary: 'Reading a qubit state off a sphere.',
-  score: 84,
-  state: 'mastered',
+  score: 0,
+  state: 'upcoming',
   lessons: ['One qubit', 'Bloch coordinates', 'Global phase']
 },
 {
   id: 's4',
   index: 4,
   title: 'Superposition & phase gates',
-  summary: 'You are here. Two lessons left before the next check.',
-  score: 72,
-  state: 'current',
+  summary: 'Hadamard state generation and geometric phase rotation.',
+  score: 0,
+  state: 'upcoming',
   lessons: ['Hadamard gate', 'Phase gates & rotations', 'Interference']
 },
 {
   id: 's5',
   index: 5,
   title: 'Entanglement & two-qubit gates',
-  summary: 'Opens once you reach 80% on superposition.',
+  summary: 'Opens once you complete single-qubit rotations.',
   score: 0,
   state: 'upcoming',
   lessons: ['CNOT', 'Bell states', 'Teleportation']
@@ -172,7 +173,7 @@ export const pathSteps: PathStep[] = [
   id: 's6',
   index: 6,
   title: 'Quantum algorithms',
-  summary: 'The final stretch of your goal.',
+  summary: 'Capstone search algorithms and oracle synthesis.',
   score: 0,
   state: 'upcoming',
   lessons: ['Grover search', "Deutsch–Jozsa", 'Shor overview']
@@ -186,13 +187,13 @@ export const assessments: Assessment[] = [
   summary: 'Checks how well you handle backpropagation, loss metrics and regularisation.',
   questions: 14,
   minutes: 8,
-  bestScore: 88,
+  bestScore: null,
   kind: 'Diagnostic'
 },
 {
   id: 'a2',
   title: 'Quantum circuit fundamentals',
-  summary: 'Tests your baseline on qubits, gates and entanglement before level 5.',
+  summary: 'Tests your baseline on qubits, gates and entanglement.',
   questions: 10,
   minutes: 12,
   bestScore: null,
@@ -200,69 +201,65 @@ export const assessments: Assessment[] = [
 }];
 
 
-export const pastAttempts = [
-{ id: 'r1', title: 'Bloch sphere checkpoint', date: 'Sept 9', score: 92, missed: 1 },
-{ id: 'r2', title: 'Unitary operators quiz', date: 'Sept 5', score: 81, missed: 3 },
-{ id: 'r3', title: 'Linear algebra diagnostic', date: 'Aug 28', score: 95, missed: 1 }];
+export const pastAttempts: { id: string; title: string; date: string; score: number; missed: number }[] = [];
 
 
 export const badges: Badge[] = [
 {
   id: 'b1',
   title: 'First lesson finished',
-  summary: 'You completed your opening module end to end.',
-  earnedOn: 'Sept 1, 2026'
+  summary: 'Complete your opening module end to end.',
+  progress: { value: 0, target: 1, unit: 'lesson' }
 },
 {
   id: 'b2',
   title: 'Seven days in a row',
-  summary: 'You studied every day for a full week.',
-  earnedOn: 'Sept 7, 2026'
+  summary: 'Study every day for a full week.',
+  progress: { value: 0, target: 7, unit: 'days' }
 },
 {
   id: 'b3',
   title: 'Scored above 85%',
-  summary: 'You cleared a level 4 diagnostic on the first attempt.',
-  earnedOn: 'Sept 10, 2026'
+  summary: 'Clear a diagnostic assessment with distinction.',
+  progress: { value: 0, target: 85, unit: '%' }
 },
 {
   id: 'b4',
   title: 'Ten topics mastered',
-  summary: 'Ten separate topics above 90% accuracy.',
-  earnedOn: 'Sept 9, 2026'
+  summary: 'Master ten separate curriculum topics.',
+  progress: { value: 0, target: 10, unit: 'topics' }
 },
 {
   id: 'b5',
-  title: 'Reach level 5',
-  summary: 'Earn 4,500 XP to move up a level.',
-  progress: { value: 3450, target: 4500, unit: 'XP' }
+  title: 'Reach Tier 2 Competency',
+  summary: 'Earn 350 Competency Points to advance your competency tier.',
+  progress: { value: 0, target: 350, unit: 'CP' }
 },
 {
   id: 'b6',
   title: 'Fourteen days in a row',
   summary: 'Keep one study session a day going for two weeks.',
-  progress: { value: 7, target: 14, unit: 'days' }
+  progress: { value: 0, target: 14, unit: 'days' }
 }];
 
 
 export const skills: Skill[] = [
-{ name: 'Neural networks', mastery: 88 },
-{ name: 'Linear algebra', mastery: 95 },
-{ name: 'Quantum algorithms', mastery: 62 },
-{ name: 'Circuit design', mastery: 71 },
-{ name: 'Probability', mastery: 83 }];
+{ name: 'Mathematical Foundations', mastery: 0 },
+{ name: 'Single-Qubit Gates', mastery: 0 },
+{ name: 'Bloch Sphere Geometry', mastery: 0 },
+{ name: 'Quantum Entanglement', mastery: 0 },
+{ name: 'Quantum Algorithms', mastery: 0 }];
 
 
 export const weeklyMinutes = [
-{ day: 'Mon', minutes: 48 },
-{ day: 'Tue', minutes: 22 },
-{ day: 'Wed', minutes: 65 },
-{ day: 'Thu', minutes: 82 },
-{ day: 'Fri', minutes: 35 },
-{ day: 'Sat', minutes: 74 },
-{ day: 'Sun', minutes: 76 }];
+{ day: 'Mon', minutes: 0 },
+{ day: 'Tue', minutes: 0 },
+{ day: 'Wed', minutes: 0 },
+{ day: 'Thu', minutes: 0 },
+{ day: 'Fri', minutes: 0 },
+{ day: 'Sat', minutes: 0 },
+{ day: 'Sun', minutes: 0 }];
 
 
-// 28 days of activity, 0–3 intensity.
-export const activity: number[] = [
-1, 2, 3, 0, 2, 3, 1, 0, 3, 1, 2, 0, 1, 2, 3, 0, 2, 2, 1, 0, 3, 1, 2, 0, 1, 2, 3, 2];
+// 28 days of activity, 0 intensity initially.
+export const activity: number[] = new Array(28).fill(0);
