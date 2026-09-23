@@ -28,7 +28,7 @@ type NavItem = {
 // Streamlined navigation WITHOUT the unwanted "Ask the tutor" tab
 const navItems: NavItem[] = [
   { id: 'path', label: 'Curriculum Journey', icon: RouteIcon, badge: 'Start' },
-  { id: 'courses', label: 'All Chapters', icon: BookOpenIcon },
+  { id: 'courses', label: 'Course Syllabus', icon: BookOpenIcon },
   { id: 'openlab', label: 'Open Lab Hub', icon: FlaskConicalIcon },
   { id: 'circuits', label: 'Circuit Studio', icon: CpuIcon },
   { id: 'dashboard', label: 'Today’s Hub', icon: LayoutGridIcon },

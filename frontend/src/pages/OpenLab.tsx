@@ -8,8 +8,13 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { ChapterLab } from '../components/ChapterLab';
 import { CURRICULUM } from '../data/curriculumData';
 import { stateStore, type AppState } from '../services/stateStore';
+import type { ViewId } from '../data/appData';
 
-export function OpenLab() {
+interface OpenLabProps {
+  onNavigate?: (id: ViewId) => void;
+}
+
+export function OpenLab({ onNavigate }: OpenLabProps = {}) {
   const [appState, setAppState] = useState<AppState>(stateStore.getState());
   const [selectedChapterId, setSelectedChapterId] = useState<string>('ch-1');
   const [selectedTopicId, setSelectedTopicId] = useState<string>('t1-1');
@@ -123,6 +128,7 @@ export function OpenLab() {
         chapterId={currentChapter.id}
         topicTitle={currentTopic.title}
         onCompleted={() => {}}
+        onNavigate={onNavigate}
       />
     </div>
   );

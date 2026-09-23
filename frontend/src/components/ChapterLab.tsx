@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   PlayIcon, 
   ExternalLinkIcon, 
@@ -6,8 +6,7 @@ import {
   CheckIcon, 
   FlaskConicalIcon, 
   RefreshCwIcon,
-  CheckCircle2Icon,
-  AlertTriangleIcon,
+  CheckCircle2Icon, 
   HelpCircleIcon,
   LayersIcon,
   Code2Icon,
@@ -15,9 +14,9 @@ import {
   SparklesIcon,
   DownloadIcon,
   UploadCloudIcon,
-  TerminalIcon,
+  CompassIcon,
   CpuIcon,
-  CompassIcon
+  ArrowRightIcon
 } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
@@ -27,14 +26,16 @@ import { stateStore } from '../services/stateStore';
 import { apiClient } from '../services/apiClient';
 import { BlochSphere3D } from './quantum/BlochSphere3D';
 import { HistogramChart } from './quantum/HistogramChart';
-import { QuantumCodeGenerator, FRAMEWORKS, type QuantumFramework } from '../services/quantumCodeGenerator';
-import { ConceptualQuantumCodeEngine } from '../services/conceptualQuantumCode';
+import { QuantumCodeGenerator, type QuantumFramework } from '../services/quantumCodeGenerator';
+import { QuantumCodeViewer } from './quantum/QuantumCodeViewer';
+import type { ViewId } from '../data/appData';
 
 interface ChapterLabProps {
   mission: LabMission;
   chapterId: string;
   topicTitle?: string;
   onCompleted?: () => void;
+  onNavigate?: (id: ViewId) => void;
 }
 
 interface DiagnosticError {
@@ -44,18 +45,12 @@ interface DiagnosticError {
   remedy: string;
 }
 
-export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: ChapterLabProps) {
-  const [circuitGates, setCircuitGates] = useState<string[]>(mission.initialCircuit);
-  const [codingMode, setCodingMode] = useState<'wire' | 'script'>('wire');
-  const [pseudocodeText, setPseudocodeText] = useState<string>(() =>
-    ConceptualQuantumCodeEngine.gatesToScript(mission.initialCircuit, mission.initialCircuit.includes('CX') ? 2 : 1)
-  );
-  const [syntaxErrors, setSyntaxErrors] = useState<string[]>([]);
+export function ChapterLab({ mission, chapterId, topicTitle, onCompleted, onNavigate }: ChapterLabProps) {
+  const [circuitGates] = useState<string[]>(mission.initialCircuit);
   const [simulating, setSimulating] = useState(false);
   const [results, setResults] = useState<{ [state: string]: number } | null>(null);
   const [blochVectors, setBlochVectors] = useState<any[]>([]);
   const [simStats, setSimStats] = useState<{ executionTimeMs: number; shots: number } | null>(null);
-  const [copied, setCopied] = useState(false);
   const [qiskitCopied, setQiskitCopied] = useState(false);
   const [missionSuccess, setMissionSuccess] = useState(false);
 
@@ -70,53 +65,6 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
   const state = stateStore.getState();
   const isAlreadyCompleted = state.progress.completedLabs.includes(mission.id);
 
-  // Sync visual wire to script when circuitGates changes externally
-  const updateGatesAndScript = (newGates: string[]) => {
-    setCircuitGates(newGates);
-    const numQubits = newGates.includes('CX') ? 2 : 1;
-    setPseudocodeText(ConceptualQuantumCodeEngine.gatesToScript(newGates, numQubits));
-    setSyntaxErrors([]);
-  };
-
-  const handleScriptChange = (text: string) => {
-    setPseudocodeText(text);
-    const parsed = ConceptualQuantumCodeEngine.parseScript(text);
-    setSyntaxErrors(parsed.syntaxErrors);
-    if (parsed.syntaxErrors.length === 0) {
-      const extractedGates = parsed.gates.map(g => g.type);
-      setCircuitGates(extractedGates);
-    }
-  };
-
-  const handleAddGate = (gate: string) => {
-    if (circuitGates.length < 12) {
-      const newGates = [...circuitGates, gate];
-      updateGatesAndScript(newGates);
-      setDiagnostics(null);
-      setCircuitExplanation(null);
-    }
-  };
-
-  const handleClearCircuit = () => {
-    updateGatesAndScript([]);
-    setResults(null);
-    setMissionSuccess(false);
-    setDiagnostics(null);
-    setCircuitExplanation(null);
-    setResultExplanation(null);
-  };
-
-  const handleResetToDefault = () => {
-    updateGatesAndScript(mission.initialCircuit);
-    setResults(null);
-    setMissionSuccess(false);
-    setDiagnostics(null);
-    setCircuitExplanation(null);
-    setResultExplanation(null);
-  };
-
-
-
   const handleRunSimulation = () => {
     setSimulating(true);
     setResults(null);
@@ -126,7 +74,6 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
       let simulatedCounts: { [key: string]: number } = {};
       let vectors: any[] = [];
       const circuitStr = circuitGates.join(' ');
-      const hasCX = circuitGates.includes('CX');
 
       if (circuitGates.length === 0) {
         simulatedCounts = { '0': 1024, '1': 0 };
@@ -169,7 +116,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
     setDiagnosing(true);
     try {
       const circuitJson = {
-        num_qubits: 2,
+        num_qubits: circuitGates.includes('CX') ? 2 : 1,
         gates: circuitGates.map(g => ({
           gate: g === 'CX' ? 'CX' : g,
           qubit: 0,
@@ -178,46 +125,11 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
         }))
       };
 
-      const res = await apiClient.analyzeErrors(circuitJson, mission.targetOutcome, 0.1);
-      if (res && res.errors && res.errors.length > 0) {
-        setDiagnostics(res.errors);
+      const res = await apiClient.diagnoseCircuit(circuitJson, mission.targetOutcome);
+      if (res?.diagnostics && res.diagnostics.length > 0) {
+        setDiagnostics(res.diagnostics);
       } else {
-        // Evaluate local deterministic rules if backend errors empty
-        const found: DiagnosticError[] = [];
-        const hasH = circuitGates.includes('H');
-        const hasCX = circuitGates.includes('CX');
-        const targetLower = (mission.targetOutcome || '').toLowerCase();
-
-        if (circuitGates.length === 0) {
-          found.push({
-            level: 'L1_CODE_ERROR',
-            title: 'Empty Quantum Wire',
-            message: 'No unitary operations have been placed on the register.',
-            remedy: 'Add at least one quantum gate (e.g., H or X) to prepare an active state.'
-          });
-        }
-
-        if (targetLower.includes('entangle') || targetLower.includes('bell')) {
-          if (!hasH || !hasCX) {
-            found.push({
-              level: 'L4_ALGORITHMIC_ERROR',
-              title: 'Bell State Algorithm Incomplete',
-              message: 'Preparing an entangled Bell state requires an H gate on control wire followed by a CNOT (CX) gate.',
-              remedy: 'Add an H gate, then attach a CNOT (+ CNOT) to entangle wires 0 and 1.'
-            });
-          }
-        }
-
-        if (circuitGates.filter(g => g === 'H').length % 2 === 0 && circuitGates.includes('H') && !circuitGates.includes('S')) {
-          found.push({
-            level: 'L3_CONCEPTUAL_ERROR',
-            title: 'Conceptual Phase Identity (H · H = I)',
-            message: 'Applying two consecutive Hadamard gates without phase shifts causes complete destructive interference, returning state to |0⟩.',
-            remedy: 'If you intended a phase flip, insert an S or Z gate between the Hadamards (H-S-S-H).'
-          });
-        }
-
-        setDiagnostics(found);
+        setDiagnostics([]);
       }
     } catch {
       setDiagnostics([]);
@@ -230,7 +142,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
     setExplaining(true);
     try {
       const circuitJson = {
-        num_qubits: 2,
+        num_qubits: circuitGates.includes('CX') ? 2 : 1,
         gates: circuitGates.map(g => ({ gate: g, qubit: 0 }))
       };
       const res = await apiClient.explainCircuit(circuitJson);
@@ -247,7 +159,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
     setExplaining(true);
     try {
       const circuitJson = {
-        num_qubits: 2,
+        num_qubits: circuitGates.includes('CX') ? 2 : 1,
         gates: circuitGates.map(g => ({ gate: g, qubit: 0 }))
       };
       const res = await apiClient.explainResult(circuitJson, results);
@@ -272,11 +184,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
     1024
   );
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(activeSnippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const numQubits = circuitGates.includes('CX') ? 2 : 1;
 
   return (
     <div className="space-y-6">
@@ -308,7 +216,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
             href={`/notebooks/topics/${mission.id}_${mission.id.replace('lab-', 't')}.ipynb`}
             download
             className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-            title="Download verified, self-grading interactive Jupyter/Colab notebook with guided TODOs"
+            title="Download verified, self-grading interactive Jupyter/Colab notebook"
           >
             <DownloadIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             Download Notebook (.ipynb)
@@ -350,146 +258,63 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
           </div>
         </div>
 
-        {/* Dual-Mode Coding Switcher: Interactive Wire vs. Conceptual Quantum Script */}
-        <div className="mt-6 border-t border-zinc-200 pt-5 dark:border-zinc-800">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setCodingMode('wire')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  codingMode === 'wire'
-                    ? 'bg-white text-emerald-700 dark:bg-zinc-800 dark:text-emerald-400 shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-                }`}
-              >
-                <CpuIcon className="h-3.5 w-3.5" />
-                Visual Qubit Wire
-              </button>
-              <button
-                type="button"
-                onClick={() => setCodingMode('script')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  codingMode === 'script'
-                    ? 'bg-white text-emerald-700 dark:bg-zinc-800 dark:text-emerald-400 shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-                }`}
-              >
-                <TerminalIcon className="h-3.5 w-3.5" />
-                Conceptual Quantum Script (Pseudocode)
-              </button>
+        {/* Clean Canonical Quantum Architecture Display (Circuit Builder removed in favor of Circuit Studio) */}
+        <div className="mt-6 border-t border-zinc-200 pt-5 dark:border-zinc-800 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <CpuIcon className="h-3.5 w-3.5 text-emerald-500" />
+                Target Quantum Register Architecture
+              </h5>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Canonical circuit sequence for {mission.title}
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            {onNavigate && (
               <button
                 type="button"
-                onClick={handleResetToDefault}
-                className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                onClick={() => onNavigate('circuits')}
+                className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
               >
-                Reset preset
+                <span>Design custom circuits in Circuit Studio</span>
+                <ArrowRightIcon className="h-3 w-3" />
               </button>
-              <span className="text-zinc-300 dark:text-zinc-700">·</span>
-              <button
-                type="button"
-                onClick={handleClearCircuit}
-                className="text-xs text-red-500 hover:text-red-600"
-              >
-                Clear all
-              </button>
-            </div>
+            )}
           </div>
 
-          {/* MODE 1: Interactive Visual Wire */}
-          {codingMode === 'wire' && (
-            <div className="space-y-4 animate-in fade-in">
-              {/* Wire Visualizer */}
-              <div className="relative flex items-center min-h-[90px] rounded-xl border border-zinc-300 bg-zinc-900 p-4 font-mono text-white dark:border-zinc-700 overflow-x-auto">
-                <div className="absolute left-14 right-4 h-0.5 bg-zinc-600 top-1/2 -translate-y-1/2" />
+          {/* Canonical Wire Visualization */}
+          <div className="relative flex items-center min-h-[96px] rounded-xl border border-zinc-800 bg-[#090d16] p-5 font-mono text-white overflow-x-auto shadow-inner">
+            <div className="absolute left-16 right-6 h-0.5 bg-zinc-700/80 top-1/2 -translate-y-1/2" />
 
-                <div className="relative z-10 flex items-center gap-3">
-                  <span className="flex h-8 w-10 items-center justify-center rounded bg-zinc-800 text-xs font-bold text-zinc-300 border border-zinc-700">
-                    q[0]
-                  </span>
+            <div className="relative z-10 flex items-center gap-3">
+              <span className="flex h-8 w-11 items-center justify-center rounded-lg bg-zinc-800 text-xs font-bold text-zinc-300 border border-zinc-700">
+                q[0]
+              </span>
 
-                  {circuitGates.length === 0 ? (
-                    <span className="text-xs text-zinc-500 italic pl-4">
-                      (Wire empty — Click gate chips below or type in Script mode)
+              {circuitGates.length === 0 ? (
+                <span className="text-xs text-zinc-500 italic pl-3">
+                  |0⟩ Initial Ground State (Identity Transformation)
+                </span>
+              ) : (
+                circuitGates.map((gate, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 font-bold text-xs text-white shadow-lg border border-emerald-400">
+                      {gate}
                     </span>
-                  ) : (
-                    circuitGates.map((gate, i) => (
-                      <span
-                        key={i}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 font-bold text-xs text-white shadow-md border border-emerald-400 animate-in fade-in"
-                      >
-                        {gate}
-                      </span>
-                    ))
-                  )}
-
-                  <span className="flex h-8 w-12 items-center justify-center rounded bg-zinc-800 text-[10px] font-bold text-zinc-400 border border-zinc-700 ml-auto">
-                    MEASURE
-                  </span>
-                </div>
-              </div>
-
-              {/* Gate Toolbox */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-2">
-                  Add Unitary Gate:
-                </span>
-                {['H', 'X', 'Y', 'Z', 'S', 'T'].map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => handleAddGate(g)}
-                    className="flex h-8 px-3 items-center justify-center rounded-lg border border-zinc-300 bg-white text-xs font-bold text-zinc-800 hover:bg-zinc-100 hover:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition shadow-sm"
-                  >
-                    + {g} Gate
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => handleAddGate('CX')}
-                  className="flex h-8 px-3 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 transition"
-                >
-                  + CNOT (Entangle)
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* MODE 2: Conceptual Quantum Script (Pseudocode Editor) */}
-          {codingMode === 'script' && (
-            <div className="space-y-3 animate-in fade-in">
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                <span>Natural Quantum Pseudocode (Framework-Independent)</span>
-                <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
-                  Auto-syncs with Qiskit & Aer Simulator
-                </span>
-              </div>
-              <textarea
-                value={pseudocodeText}
-                onChange={(e) => handleScriptChange(e.target.value)}
-                rows={7}
-                className="w-full rounded-xl bg-zinc-950 p-4 font-mono text-xs text-emerald-300 border border-zinc-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed shadow-inner"
-                placeholder="CREATE CIRCUIT 2 QUBITS&#10;APPLY HADAMARD TO QUBIT 0&#10;APPLY CNOT FROM QUBIT 0 TO QUBIT 1&#10;MEASURE ALL"
-              />
-
-              {syntaxErrors.length > 0 && (
-                <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-700 dark:text-red-300 space-y-1">
-                  <div className="font-bold flex items-center gap-1.5">
-                    <AlertTriangleIcon className="h-4 w-4 text-red-500" />
-                    Syntax Validation Warnings:
+                    {i < circuitGates.length - 1 && (
+                      <span className="text-zinc-600 text-xs">→</span>
+                    )}
                   </div>
-                  {syntaxErrors.map((err, idx) => (
-                    <p key={idx} className="font-mono pl-5">• {err}</p>
-                  ))}
-                </div>
+                ))
               )}
-            </div>
-          )}
-        </div>
 
+              <span className="flex h-8 w-16 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-bold text-emerald-400 border border-emerald-500/40 ml-auto">
+                MEASURE
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Diagnostic Actions & Socratic Controls */}
         <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-zinc-200 pt-5 dark:border-zinc-800">
@@ -514,7 +339,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
             className="text-xs h-9"
           >
             <HelpCircleIcon className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
-            Explain My Circuit
+            Explain Theoretical Circuit
           </Button>
 
           {results && (
@@ -525,7 +350,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
               className="text-xs h-9"
             >
               <SparklesIcon className="mr-1.5 h-3.5 w-3.5 text-purple-500" />
-              Explain My Result
+              Explain Simulation Result
             </Button>
           )}
         </div>
@@ -580,13 +405,13 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
           </div>
         )}
 
-        {/* Action Button & Output */}
+        {/* Run Simulation Action Button */}
         <div className="mt-6 border-t border-zinc-200 pt-5 dark:border-zinc-800">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Button
               onClick={handleRunSimulation}
               disabled={simulating}
-              className="min-h-[44px] min-w-[200px]"
+              className="min-h-[44px] min-w-[220px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
             >
               {simulating ? (
                 <>
@@ -596,7 +421,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
               ) : (
                 <>
                   <PlayIcon className="mr-2 h-4 w-4" />
-                  Run Practical Simulation
+                  Run Aer Simulation & Inspect
                 </>
               )}
             </Button>
@@ -606,7 +431,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
             </span>
           </div>
 
-          {/* Optimized Dual Visualization Module (Vertical Column Histogram + Interactive 3D Bloch Sphere) */}
+          {/* Results: Bloch Sphere + Histogram + Physical Interpretation */}
           {results && (
             <div className="mt-6 space-y-6 animate-in fade-in">
               <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
@@ -635,12 +460,12 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
                 <div className="lg:col-span-5">
                   <BlochSphere3D
                     vectors={blochVectors}
-                    numQubits={circuitGates.includes('CX') ? 2 : 1}
+                    numQubits={numQubits}
                   />
                 </div>
               </div>
 
-              {/* Quantum Physical Interpretation & Born Rule Analysis (Section 15) */}
+              {/* Quantum Physical Interpretation */}
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 sm:p-5 space-y-3">
                 <div className="flex items-center gap-2 text-sm font-bold text-emerald-400">
                   <CompassIcon className="h-4 w-4" />
@@ -680,7 +505,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
         </div>
       </Card>
 
-      {/* Standalone Google Colab Guided Workshop Card (Zero Friction / Zero Conflict) */}
+      {/* Standalone Google Colab Guided Workshop Card */}
       <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-amber-500/5 via-zinc-900/30 to-zinc-900/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-4">
           <div className="flex items-center gap-3">
@@ -708,7 +533,7 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
               onClick={() => {
                 const qiskitCode = QuantumCodeGenerator.generate(
                   'qiskit',
-                  circuitGates.includes('CX') ? 2 : 1,
+                  numQubits,
                   circuitGates.map((g, i) => ({
                     qubit: 0,
                     type: g === 'CX' ? 'CX' : g,
@@ -782,77 +607,18 @@ export function ChapterLab({ mission, chapterId, topicTitle, onCompleted }: Chap
             <strong>Zero Conflict Architecture:</strong> The in-platform simulator and external Google Colab operate independently. You can code here or in Colab without losing progress!
           </span>
         </div>
-
-        <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-zinc-200/60 dark:border-zinc-800/60 text-[11px]">
-          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span><strong>Guided Markdown:</strong> Step-by-step lesson theory & physics bridge</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-            <span><strong>Multi-Style:</strong> Supports registers, gate appends, & shorthand</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            <span><strong>Innovation Sandbox:</strong> Creative challenges & open experimentation</span>
-          </div>
-        </div>
       </Card>
 
-      {/* Multi-Framework Transpilation Suite (Qiskit + Cirq + PennyLane + OpenQASM) */}
-      <Card className="p-6 border-zinc-200 dark:border-zinc-800">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-2">
-            <Code2Icon className="h-4 w-4 text-emerald-600" />
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
-                Multi-Framework Transpiled Source Code
-              </span>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                Synthesized for production execution on IBM Quantum, Google Sycamore, and PennyLane
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Framework Switcher Tabs */}
-            <div className="flex rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
-              {FRAMEWORKS.map((fw) => (
-                <button
-                  key={fw.id}
-                  type="button"
-                  onClick={() => setSelectedFramework(fw.id)}
-                  className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
-                    selectedFramework === fw.id
-                      ? 'bg-white text-emerald-700 shadow-sm dark:bg-zinc-900 dark:text-emerald-400'
-                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
-                  }`}
-                >
-                  {fw.name}
-                </button>
-              ))}
-            </div>
-
-            <Button variant="secondary" onClick={handleCopyCode} className="h-7 text-xs px-3">
-              {copied ? (
-                <>
-                  <CheckIcon className="mr-1.5 h-3.5 w-3.5 text-emerald-500" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <CopyIcon className="mr-1.5 h-3.5 w-3.5" />
-                  Copy Code
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        <pre className="mt-4 rounded-xl bg-zinc-950 p-4 font-mono text-xs text-zinc-200 overflow-x-auto border border-zinc-800 leading-relaxed">
-          <code>{activeSnippet}</code>
-        </pre>
-      </Card>
+      {/* Visually Appetizing Multi-Framework Source Code Tab (QuantumCodeViewer) */}
+      <QuantumCodeViewer
+        code={activeSnippet}
+        framework={selectedFramework}
+        onFrameworkChange={setSelectedFramework}
+        numQubits={numQubits}
+        shots={1024}
+        title="Synthesized Source Code"
+        subtitle="Multi-Framework Production Representation"
+      />
     </div>
   );
 }
