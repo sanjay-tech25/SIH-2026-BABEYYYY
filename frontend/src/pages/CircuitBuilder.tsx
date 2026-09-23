@@ -229,8 +229,13 @@ export function CircuitBuilder() {
   const [isPresetsExpanded, setIsPresetsExpanded] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [editedCode, setEditedCode] = useState<string>('');
 
   const numSteps = 7;
+
+  useEffect(() => {
+    setEditedCode(generateFrameworkCode(selectedFramework));
+  }, [gates, numQubits, shots, selectedFramework]);
 
   // Close dropdown menu when clicking outside
   useEffect(() => {
@@ -926,15 +931,23 @@ export function CircuitBuilder() {
 
       {/* Multi-Framework Quantum Code Studio (Qiskit, Cirq, PennyLane, OpenQASM) */}
       <QuantumCodeViewer
-        code={generateFrameworkCode(selectedFramework)}
+        code={editedCode || generateFrameworkCode(selectedFramework)}
+        editable={true}
+        onChange={setEditedCode}
         framework={selectedFramework}
-        onFrameworkChange={setSelectedFramework}
+        onFrameworkChange={(fw) => {
+          setSelectedFramework(fw);
+          setEditedCode(generateFrameworkCode(fw));
+        }}
         numQubits={numQubits}
         shots={shots}
         onLaunchColab={openInColab}
         colabLoading={colabLoading}
+        onResetCode={() => setEditedCode(generateFrameworkCode(selectedFramework))}
+        onRunSimulation={runSimulation}
+        isSimulating={simulating}
         title="Multi-Framework Quantum Code Studio"
-        subtitle="Real-Time AST Synthesis across 4 production quantum frameworks"
+        subtitle="Live In-Platform Editable Quantum Code Environment"
       />
 
       {/* Real-time Toast Feedback Notification */}

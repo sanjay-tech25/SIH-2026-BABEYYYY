@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   CheckIcon, 
   CopyIcon, 
   DownloadIcon, 
   ExternalLinkIcon, 
   TerminalIcon, 
-  PlayIcon,
-  RefreshCwIcon,
-  RotateCcwIcon,
-  Edit3Icon
+  PlayIcon, 
+  RefreshCwIcon, 
+  RotateCcwIcon, 
+  Edit3Icon,
+  SparklesIcon
 } from 'lucide-react';
 import { FRAMEWORKS, type QuantumFramework } from '../../services/quantumCodeGenerator';
 
@@ -131,13 +132,14 @@ export function QuantumCodeViewer({
   onLaunchColab,
   colabLoading = false,
   className = '',
-  editable = false,
+  editable = true,
   onChange,
   onRunSimulation,
   isSimulating = false,
   onResetCode
 }: QuantumCodeViewerProps) {
   const [copied, setCopied] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const currentMeta = FRAMEWORKS.find((f) => f.id === framework) || FRAMEWORKS[0];
   const filename = `quantum_circuit_${framework}.${currentMeta.fileExtension}`;
@@ -174,16 +176,26 @@ export function QuantumCodeViewer({
     }
   };
 
+  const handleFocusEditor = () => {
+    if (editable && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
   const codeLines = code.split('\n');
   const highlightedCode = highlightQuantumCode(code);
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-zinc-800 bg-[#090d16] shadow-2xl transition-all ${className}`}>
+    <div className={`overflow-hidden rounded-2xl border border-zinc-800 bg-[#090d16] shadow-2xl transition-all focus-within:border-emerald-500/60 focus-within:shadow-[0_0_25px_rgba(16,185,129,0.15)] ${className}`}>
       {/* 1. Header Bar: File Tab, Framework Selector & Action Toolbar */}
       <div className="flex flex-col gap-3 border-b border-zinc-800/80 bg-[#0d121f] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Left: Active File Tab & Status */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg bg-zinc-900/90 px-3 py-1.5 text-xs font-mono text-zinc-200 border border-zinc-700/60 shadow-inner">
+          <div 
+            onClick={handleFocusEditor}
+            className="flex items-center gap-2 rounded-lg bg-zinc-900/90 px-3 py-1.5 text-xs font-mono text-zinc-200 border border-zinc-700/60 shadow-inner cursor-pointer hover:border-emerald-500/50 transition"
+            title="Click to edit code"
+          >
             <TerminalIcon className="h-3.5 w-3.5 text-emerald-400" />
             <span className="font-semibold text-emerald-300">{filename}</span>
             <span className="text-[10px] text-zinc-500">({codeLines.length} lines)</span>
@@ -191,7 +203,11 @@ export function QuantumCodeViewer({
 
           {/* Editable Indicator */}
           {editable && (
-            <span className="hidden sm:inline-flex items-center gap-1 rounded bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+            <span 
+              onClick={handleFocusEditor}
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 cursor-pointer shadow-sm animate-pulse"
+              title="Click anywhere below to edit code"
+            >
               <Edit3Icon className="h-3 w-3" />
               Live Editable
             </span>
@@ -234,7 +250,7 @@ export function QuantumCodeViewer({
               type="button"
               onClick={onResetCode}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 px-2.5 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-700 hover:text-white transition shadow-sm"
-              title="Reset code to topic default"
+              title="Reset code to original starter code"
             >
               <RotateCcwIcon className="h-3 w-3 text-zinc-400" />
               <span className="hidden sm:inline">Reset</span>
@@ -291,7 +307,7 @@ export function QuantumCodeViewer({
               type="button"
               onClick={onRunSimulation}
               disabled={isSimulating}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-md transition disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 py-1.5 text-xs font-bold text-white shadow-md transition disabled:opacity-50 ring-2 ring-emerald-500/30"
             >
               {isSimulating ? (
                 <>
@@ -300,7 +316,7 @@ export function QuantumCodeViewer({
                 </>
               ) : (
                 <>
-                  <PlayIcon className="h-3.5 w-3.5" />
+                  <PlayIcon className="h-3.5 w-3.5 fill-current" />
                   <span>Run Code</span>
                 </>
               )}
@@ -309,10 +325,17 @@ export function QuantumCodeViewer({
         </div>
       </div>
 
-      {/* 2. Sub-header Info Bar */}
+      {/* 2. Sub-header Info Bar with Editing Prompt */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/60 bg-[#0b0f19] px-4 py-2 text-[11px] text-zinc-400">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-500">{title}:</span>
+          {editable ? (
+            <span className="text-emerald-400 font-medium flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+              Click inside editor to type, modify quantum gates, or paste code:
+            </span>
+          ) : (
+            <span className="text-zinc-500">{title}:</span>
+          )}
           <span className="text-zinc-300 font-medium">{currentMeta.tagline}</span>
         </div>
         <div className="flex items-center gap-3 font-mono text-[10px] text-zinc-500">
@@ -326,15 +349,18 @@ export function QuantumCodeViewer({
             rel="noopener noreferrer"
             className="text-zinc-400 hover:text-emerald-400 inline-flex items-center gap-1 transition"
           >
-            API Reference
+            API Docs
             <ExternalLinkIcon className="h-2.5 w-2.5" />
           </a>
         </div>
       </div>
 
-      {/* 3. Code Viewport with Gutter (Editable or Syntax Display) */}
-      <div className="relative overflow-x-auto font-mono text-xs leading-relaxed max-h-[500px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
-        <div className="flex min-w-full min-h-[260px]">
+      {/* 3. Code Viewport with Gutter & Interactive Textarea */}
+      <div 
+        onClick={handleFocusEditor}
+        className="relative overflow-x-auto font-mono text-xs leading-relaxed max-h-[520px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900 cursor-text"
+      >
+        <div className="flex min-w-full min-h-[300px]">
           {/* Line Numbers Gutter */}
           <div
             className="sticky left-0 select-none border-r border-zinc-800/80 bg-[#080b13] px-3.5 py-4 text-right font-mono text-[11px] text-zinc-600 space-y-0"
@@ -347,16 +373,20 @@ export function QuantumCodeViewer({
             ))}
           </div>
 
-          {/* Code Area */}
+          {/* Editable Code Area */}
           {editable ? (
-            <textarea
-              value={code}
-              onChange={(e) => onChange && onChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              spellCheck={false}
-              className="flex-1 py-4 px-5 text-emerald-300 font-mono text-xs leading-5 bg-transparent resize-none border-none outline-none focus:outline-none focus:ring-0 whitespace-pre overflow-x-auto min-h-[260px]"
-              placeholder="# Write or edit quantum circuit code here..."
-            />
+            <div className="flex-1 relative min-h-[300px]">
+              <textarea
+                ref={textareaRef}
+                value={code}
+                onChange={(e) => onChange && onChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                spellCheck={false}
+                className="w-full h-full min-h-[300px] py-4 px-5 text-emerald-300 font-mono text-xs leading-5 bg-transparent resize-none border-none outline-none focus:outline-none focus:ring-0 whitespace-pre overflow-x-auto caret-emerald-400 selection:bg-emerald-500/30 block"
+                rows={Math.max(14, codeLines.length + 3)}
+                placeholder="# Write, type, or paste quantum circuit code here..."
+              />
+            </div>
           ) : (
             <div className="flex-1 py-4 px-5 text-zinc-200 select-text overflow-x-auto">
               {highlightedCode.map((lineContent, i) => (
@@ -373,15 +403,20 @@ export function QuantumCodeViewer({
       <div className="flex items-center justify-between border-t border-zinc-800/80 bg-[#080b13] px-4 py-2 text-[10px] font-mono text-zinc-500">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-zinc-400">
-            {editable ? 'Live Simulator Active' : 'AST Generated'}
+          <span className="text-zinc-300 font-medium">
+            {editable ? 'Interactive Quantum Simulator Ready' : 'Synthesized AST'}
           </span>
           <span>·</span>
           <span>Target: {currentMeta.name}</span>
         </div>
-        <div>
+        <div className="flex items-center gap-3">
+          {editable && (
+            <span className="text-emerald-400 hidden sm:inline">
+              ✓ Tab indent supported
+            </span>
+          )}
           <span>UTF-8</span>
-          <span className="mx-2">·</span>
+          <span>·</span>
           <span>{code.length} chars</span>
         </div>
       </div>
