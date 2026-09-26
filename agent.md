@@ -36,6 +36,8 @@
 11. [PART 10: AUTHORITATIVE API CONTRACTS & DATABASE SCHEMAS](#part-10-authoritative-api-contracts--database-schemas)
 12. [PART 11: IMPLEMENTATION DISCIPLINE, ROADMAP & TEST FIXTURES](#part-11-implementation-discipline-roadmap--test-fixtures)
 13. [PART 12: MASTER END-TO-END IMPLEMENTATION & VERIFICATION CHECKLIST](#part-12-master-end-to-end-implementation--verification-checklist)
+14. [PART 13: QUANTECH DEEP PROBLEM ANALYSIS COMPREHENSIVE GAP CLOSURES & ARCHITECTURAL HARDENING](#part-13-quantech-deep-problem-analysis-comprehensive-gap-closures--architectural-hardening)
+15. [PART 14: EMPIRICAL BUILD GAP AUDIT & REMEDIATION ROADMAP (POST-ANALYSIS AUDIT)](#part-14-empirical-build-gap-audit--remediation-roadmap-post-analysis-audit)
 
 ---
 
@@ -1027,5 +1029,178 @@ Expanded platform preferences, session management, and custom aesthetics in `Set
   - [x] **Simulation Parameters:** Configurable default shots (512, 1024, 2048, 4096).
 - [x] **Auditory & Sensory Feedback:** Master sound toggle, audio volume slider, and sensory micro-cues on state collapse.
 - [x] **Data Sovereignty & Privacy:** Cryptographic JSON portfolio export, cloud telemetry synchronization toggle, and double-confirmation learning progress reset.
+
+---
+
+# PART 14: EMPIRICAL BUILD GAP AUDIT & REMEDIATION ROADMAP (POST-ANALYSIS AUDIT)
+
+## 14.1 Audit Synthesis & Executive Implementation Baseline
+Based on the authoritative implementation audit recorded in `QuanTech_Actual_Implementation_Status_Analysis.md`, QuanTech / EGreen Quanta has established a robust and fully verified core foundation:
+- **Verified Built Core:**
+  - **Full-Stack Application:** High-aesthetic React + TypeScript frontend with 13 verified views, glassmorphic styling, responsive layout, centralized API client, and zero build/compile errors. FastAPI backend with Pydantic validation, CORS, error handling, and verified health/instructor API responses.
+  - **Adaptive Learning Intelligence:** Bayesian Knowledge Tracing (BKT) engine with dynamic parameter modulations for rapid guessing ($t < 4\text{s}$) and hesitation ($t > 120\text{s}$); Diagnostic Placement engine with three starting tiers (`YOUNG_EXPLORER`, `COLLEGE_STUDENT`, `RESEARCH_ADULT`); Prerequisite Knowledge Graph / DAG with cycle detection and topological gatekeeping.
+  - **Interactive Quantum Experimentation:** Drag-and-drop Quantum Circuit Builder with gate operators (`H, X, Y, Z, S, T, CX, CZ, SWAP, RX, RY, RZ, M`), algorithm presets (Bell States, Grover, Superposition), genuine Qiskit Aer statevector simulation, probability distribution bar charts, measurement histograms, and 3D Bloch sphere vector visualization.
+  - **Assessment & Educational Analytics:** Formative and adaptive quizzes, conceptual explanations, study heatmaps, daily streaks, mastery radar charts, and learner telemetry.
+  - **Instructor Intelligence & Intervention:** Real-time cohort analytics, student monitoring directory, concept-struggle detection heatmap, targeted remediation dispatch endpoint, and CSV gradebook export.
+  - **Sensory & Operational Hardening:** Web Audio API synthesized feedback micro-cues with WCAG 2.1 AA visual parity, user mute sovereignty, zombie process port collision resolution, and crash prevention hardening.
+
+---
+
+## 14.2 AI Tutor Architectural Exemption & Governance Policy
+> [!IMPORTANT]
+> **Strict Architectural Invariant — AI Tutor Decoupling & Mascot Ownership:**  
+> In accordance with system architecture planning, **the AI Tutor / conversational pedagogical guidance layer is strictly excluded from this engineering gap list**.  
+> Intelligent conversational tutoring, Socratic dialogue, affective emotional support, hint progression, and conceptual inquiry are **not** to be implemented as a generic, disconnected chatbot widget or floating sidebar. Instead, all conversational pedagogy is architected natively into the **QUBOT Mascot Companion State Machine & Event Engine** (`app/services/mascot_service.py`, `app/services/qubot_cooldown_manager.py`, and `frontend/src/stores/useQubotStore.ts`).  
+> Therefore, gaps regarding generic chatbot assistants, standalone conversational tutoring widgets, or independent AI tutor sidebars are formally decommissioned from this gap audit.
+
+---
+
+## 14.3 Granular Breakdown of Confirmed Existing Build Gaps
+
+The implementation audit establishes the following empirical gaps between the current build record and the complete SIH/industry platform vision:
+
+### Gap 1: Multi-Framework Quantum Execution & Runtime Integration (Beyond Transpilation)
+- **Current State:** The platform provides visual-to-code transpilation (`QuantumTranslationEngine`, `QuantumCodeGenerator.ts`) capable of exporting placed circuits to Qiskit, Google Cirq, Xanadu PennyLane, and OpenQASM.
+- **Identified Gap:** The backend simulation execution pipeline (`qiskit_backend.py`) currently executes **only** via Qiskit Aer. There are no backend execution workers for Google Cirq (`cirq.Simulator`) or Xanadu PennyLane (`qml.device`, analytic quantum expectation nodes). Furthermore, **qBraid integration** (unified cloud quantum environment / multi-SDK runtime abstraction) is completely unestablished.
+- **Required Action:**
+  - Build `CirqExecutionBackend` supporting native Cirq circuit simulation and measurement sampling.
+  - Build `PennyLaneExecutionBackend` supporting variational quantum state simulation and expectation value calculation.
+  - Architect a unified `QuantumExecutionRouter` dispatching execution requests based on user-selected framework.
+  - Design a qBraid API connector interface for standardized quantum workspace interoperability.
+
+### Gap 2: Real Physical Quantum Hardware Execution & Cloud Pipeline
+- **Current State:** Quantum circuit execution runs entirely on local simulation backends (Qiskit Aer / NumPy tensor fallback).
+- **Identified Gap:** There is zero operational integration with real physical quantum computing hardware (e.g., IBM Quantum Platform, AWS Braket, Rigetti, or IonQ). The current build record lacks:
+  - IBM Quantum API credential management and secure user token storage.
+  - Asynchronous quantum job submission queues and background worker polling.
+  - Job status tracking (`QUEUED`, `INITIALIZING`, `RUNNING`, `COMPLETED`, `FAILED`) with webhook/WebSocket notifications.
+  - Live QPU calibration data ingestion (real-time $T_1$ relaxation, $T_2$ dephasing, and readout fidelity from live backends like `ibm_brisbane` or `ibm_kyiv`).
+  - Side-by-side comparative visualization contrasting ideal simulator predictions against physical noisy quantum hardware executions.
+- **Required Action:**
+  - Implement `IBMQuantumService` utilizing `qiskit-ibm-runtime` (SamplerV2 and EstimatorV2 primitives).
+  - Implement an asynchronous job queue table (`quantum_jobs`) with Celery/asyncio background worker status polling.
+  - Create a "Physical Hardware vs. Simulator" comparative inspection drawer in the Circuit Studio.
+
+### Gap 3: Secure Server-Side Sandboxed Code Execution Infrastructure
+- **Current State:** Learners can export Jupyter notebooks to Google Colab, download `.ipynb` files, and edit code in the in-platform monospace code studio (`QuantumCodeViewer.tsx`).
+- **Identified Gap:** Server-side execution of arbitrary quantum Python scripts lacks an isolated, hardened sandbox environment. Running untrusted user Python scripts on the FastAPI backend without resource constraints poses severe security and denial-of-service risks:
+  - No containerized isolation (Docker / gVisor / Firecracker microVMs / WebAssembly runtimes).
+  - No strict resource limits (capping CPU usage to 1 core, RAM to 512MB).
+  - No deterministic execution timeouts (e.g. hard 5-second kill switch against infinite quantum loops).
+  - No AST-level security sanitization filtering out hazardous system calls (`os`, `sys`, `subprocess`, `socket`, `eval`, `open`).
+- **Required Action:**
+  - Build `QuantumCodeSandbox` with AST inspection rejecting blacklisted Python modules and built-ins.
+  - Implement isolated subprocess execution with strict OS-level timeout, memory, and CPU limits.
+
+### Gap 4: Production Identity, Authentication & Role-Based Access Control (OAuth2 / JWT)
+- **Current State:** Basic authentication schemas (`app/schemas/auth.py`), user models, and frontend session switching cards exist.
+- **Identified Gap:** The complete production-grade OAuth2 and JWT authentication lifecycle is insufficiently implemented and verified as enforcing middleware across all API routes:
+  - OAuth2 third-party social/institutional login (Google, GitHub, Academic Shibboleth SSO) is not connected.
+  - JWT token issuance, refresh token rotation, and cryptographic revocation (token blacklisting in Redis) are not fully integrated into FastAPI route dependencies.
+  - Route-level Role-Based Access Control (RBAC) is not strictly enforced: learner accounts can currently access instructor-level endpoints (`/api/v1/instructor/*`) without authorization challenge.
+- **Required Action:**
+  - Integrate FastAPI `OAuth2PasswordBearer` and JWT validation dependencies across all `/api/v1` routes.
+  - Enforce role-based permission gates (`RoleChecker(["INSTRUCTOR", "ADMIN"])`) protecting instructor analytics and gradebook export.
+  - Implement OAuth2 login providers for Google and GitHub.
+
+### Gap 5: Automated Circuit Optimization Passes (Non-Tutor Intelligence)
+- **Current State:** The platform contains a 4-level diagnostic error hierarchy (`QuantumErrorHierarchyEngine`) classifying L1 Code, L2 Circuit Topology, L3 Conceptual, and L4 Algorithmic errors.
+- **Identified Gap:** Automated quantum circuit optimization (gate synthesis, depth reduction, and transpiler optimization passes) is specified in requirements but not established as a built engine:
+  - No automated gate reduction heuristics (e.g., cancelling adjacent $H \cdot H = I$, $X \cdot X = I$).
+  - No Clifford+T circuit decomposition or rotation gate merging ($R_z(\theta_1) R_z(\theta_2) = R_z(\theta_1 + \theta_2)$).
+  - No transpiler optimization level comparison (comparing Qiskit Transpiler Level 0 vs Level 3 circuit depth, 2-qubit gate count, and estimated error rate).
+- **Required Action:**
+  - Implement `CircuitOptimizationEngine` in `app/quantum/` providing automated gate cancellation and Qiskit pass-manager optimization.
+  - Surface an "Optimize Circuit" button in Circuit Studio showing before/after gate counts and depth reductions.
+
+### Gap 6: Curriculum & Assessment Parity: Full 11-Chapter DB Parity vs 5-Core Backend Verification
+- **Current State:** The TypeScript curriculum definitions and 22 topic Jupyter notebooks cover all 11 chapters. However, backend automated tests (45/45) and database seeds primarily substantiate the 5 core foundational chapters (Math, Qubits, Multi-qubit Gates, Algorithms, Hardware/Noise).
+- **Identified Gap:** Chapters 6 through 11 (Advanced Algorithms, Quantum Cryptography, Quantum Error Correction, NISQ hardware constraints, and Practical Qiskit 1.0) require full database seeding, persistent migrations, and complete backend integration verification:
+  - Database seed scripts need complete question banks and lesson records for Chapters 6–11.
+  - Dedicated backend test fixtures validating DAG traversal and BKT progression across all 11 chapters.
+- **Required Action:**
+  - Seed complete 11-chapter lesson catalog, DAG nodes, and multi-modal question banks into PostgreSQL/SQLite migrations.
+  - Expand test suites to verify end-to-end traversal from Chapter 1 through Chapter 11.
+
+### Gap 7: Comprehensive Noise Models & Real-World NISQ Calibration
+- **Current State:** The simulator worker includes a basic depolarizing noise channel parameter.
+- **Identified Gap:** Detailed physical noise modeling reflecting genuine NISQ hardware constraints is not fully implemented or surfaced in the user interface:
+  - Energy relaxation time ($T_1$) and dephasing time ($T_2$) thermal relaxation channels.
+  - Gate fidelity calibration (single-qubit Pauli-X error, two-qubit CNOT cross-talk error rates).
+  - Measurement readout assignment error matrices (probabilistic bit-flips during projective measurement).
+- **Required Action:**
+  - Enhance `qiskit_backend.py` with configurable `ThermalRelaxationNoise` and `ReadoutErrorModel`.
+  - Surface interactive noise sliders in Circuit Studio allowing students to experiment with realistic decoherence.
+
+---
+
+## 14.4 Complete Implementation & Build Gap Matrix
+
+| Component / Subsystem | Actual Build Status | Evidence Basis | Priority | Architectural Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **React + TypeScript Frontend** | Built & Verified | Explicit (13 views, glassmorphic UI, 0 build errors) | -- | Complete; do not rebuild |
+| **FastAPI Backend Core** | Built & Verified | Explicit (Pydantic V2, routers, health checks) | -- | Complete; do not rebuild |
+| **Bayesian Knowledge Tracing (BKT)** | Built & Verified | Explicit (`mastery_engine.py`, dynamic slip/guess) | -- | Complete; do not rebuild |
+| **Diagnostic Placement Engine** | Built & Verified | Explicit (`diagnostic_engine.py`, 3 starting tiers) | -- | Complete; do not rebuild |
+| **Knowledge Graph & Prerequisite DAG** | Built & Verified | Explicit (cycle detection, gatekeeper rule) | -- | Complete; do not rebuild |
+| **Quantum Circuit Builder** | Built & Verified | Explicit (drag & drop, gate toolbox, presets) | -- | Complete; do not rebuild |
+| **Qiskit Aer Quantum Simulator** | Built & Verified | Explicit (1024 shots, statevector, probabilities) | -- | Complete; do not rebuild |
+| **Quantum Visualizers (3D Bloch, Bars)** | Built & Verified | Explicit (Three.js Bloch sphere, histograms) | -- | Complete; do not rebuild |
+| **Instructor Analytics & Intervention** | Built & Verified | Explicit (cohort analytics, struggle map, CSV export)| -- | Complete; do not rebuild |
+| **Sensory Audio Micro-Cues** | Built & Verified | Explicit (Web Audio API, WCAG visual parity) | -- | Complete; do not rebuild |
+| **AI Tutor / Conversational Guidance** | Decoupled / Excluded | **Mascot Ownership** | **N/A** | **Handled exclusively via QUBOT Mascot Architecture** |
+| **Multi-Framework Backend Execution** | **Unbuilt Gap** | Missing (Only Qiskit Aer executes; Cirq/PennyLane unbuilt) | **P1** | Build execution runners for Cirq & PennyLane |
+| **qBraid Cloud Integration** | **Unbuilt Gap** | Missing (No qBraid API or runner) | **P3** | Multi-SDK cloud workspace abstraction |
+| **Real Quantum Hardware Execution** | **Unbuilt Gap** | Missing (No IBM Quantum Runtime / physical QPU pipeline)| **P1** | Add IBM Quantum Runtime API, job queue & status tracker |
+| **Secure Code Sandbox** | **Unbuilt Gap** | Insufficient (No isolated server-side execution jail) | **P1** | Build containerized/restricted Python execution jail |
+| **Production OAuth2 / JWT Auth & RBAC** | **Unbuilt Gap** | Insufficient (Stub/mock auth; unverified RBAC middleware) | **P2** | Implement OAuth2 SSO, JWT lifecycle & role security |
+| **Automated Circuit Optimization Passes** | **Unbuilt Gap** | Missing (Only error hierarchy built; no optimizer passes) | **P2** | Implement Qiskit pass-manager & gate reduction heuristics |
+| **Full 11-Chapter DB Parity & Seeding** | **In-Progress Gap** | Partial (5 core chapters verified; 6–11 need full DB seeding) | **P2** | Seed complete 11-chapter lessons & tests in database |
+| **Comprehensive NISQ Noise Models** | **In-Progress Gap** | Partial (Basic depolarizing only; missing $T_1/T_2$/readout) | **P3** | Add thermal relaxation & readout error models to UI |
+
+---
+
+## 14.5 What Must NOT Be Rebuilt (Foundation Protection Invariant)
+To maintain engineering efficiency and prevent regression, the following components are strictly certified as **DONE** and must not be refactored or rebuilt:
+1. Core React 18 / TypeScript / Vite architecture and 13-view application layout.
+2. Glassmorphic design system (`Outfit`, `Inter`, `JetBrains Mono`, cyan/purple palette).
+3. Authoritative Bayesian Knowledge Tracing engine and dynamic parameter formulas.
+4. Prerequisite DAG resolver and cycle-free topological graph verification.
+5. Drag-and-drop Quantum Circuit Builder interface and gate manipulation logic.
+6. Qiskit Aer statevector simulation and 3D Bloch sphere vector coordinate calculator.
+7. Instructor cohort analytics, struggle detection, and gradebook export endpoints.
+8. Native Web Audio API sound cue synthesis and WCAG 2.1 AA accessibility parity.
+9. 22 Topic Google Colab notebook generators and public workbook artifacts.
+
+---
+
+## 14.6 Prioritized Execution Roadmap for Gap Closure
+
+### Phase A: Quantum Multi-Framework & Hardware Execution (P1)
+- [ ] Implement `cirq_backend.py` supporting `cirq.Simulator` circuit execution and measurement histograms.
+- [ ] Implement `pennylane_backend.py` supporting QNode execution and expectation values.
+- [ ] Build `ibm_quantum_service.py` integrating `qiskit-ibm-runtime` (SamplerV2 / EstimatorV2) with asynchronous job queueing.
+- [ ] Add hardware execution progress status polling and comparative hardware vs. simulator results display.
+
+### Phase B: Secure Server-Side Sandboxed Code Execution (P1)
+- [ ] Build `quantum_sandbox.py` with Python AST parsing to block unsafe imports (`os`, `sys`, `subprocess`, `socket`).
+- [ ] Implement execution timeout (5-second hard limit) and memory limits (512MB RAM cap).
+- [ ] Connect the in-platform code editor (`QuantumCodeViewer.tsx`) to the verified sandbox runner.
+
+### Phase C: Production Authentication, JWT & Role Security (P2)
+- [ ] Integrate FastAPI `OAuth2PasswordBearer` and JWT token verification across protected `/api/v1` routes.
+- [ ] Enforce strict Role-Based Access Control (`RoleChecker(["INSTRUCTOR"])`) on all instructor analytics endpoints.
+- [ ] Implement Google / GitHub OAuth2 social login endpoints.
+
+### Phase D: Automated Circuit Optimization Passes (P2)
+- [ ] Build `circuit_optimizer.py` utilizing Qiskit Transpiler pass managers (optimization levels 0–3).
+- [ ] Implement rule-based gate cancellation (cancelling inverse gate pairs, merging rotation angles).
+- [ ] Surface optimization metrics (circuit depth reduction, 2-qubit gate count reduction) in Circuit Studio.
+
+### Phase E: Full 11-Chapter DB Seeding & Advanced Noise Models (P3)
+- [ ] Complete database migration seeds populating all 11 chapters, DAG nodes, and multi-modal questions in SQLite/PostgreSQL.
+- [ ] Add thermal relaxation ($T_1, T_2$) and measurement readout noise models into `qiskit_backend.py` with interactive UI controls.
+- [ ] Implement qBraid cloud SDK connector specification for multi-cloud quantum execution.
+
 
 
