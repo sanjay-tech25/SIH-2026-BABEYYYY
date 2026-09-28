@@ -26,6 +26,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ChapterLab } from '../components/ChapterLab';
 import { BlochSphere3D } from '../components/quantum/BlochSphere3D';
+import { MultimodalQuantumFeedback } from '../components/quantum/MultimodalQuantumFeedback';
 import { CURRICULUM, type Chapter, type Topic } from '../data/curriculumData';
 import { getSocraticFlowForTopic, type SocraticStep, type SocraticTopicFlow } from '../data/socraticCurriculum';
 import { stateStore, type AppState } from '../services/stateStore';
@@ -488,89 +489,41 @@ export function Lesson({ onNavigate }: LessonProps) {
                   </Button>
                 ) : (
                   <div className="space-y-4">
-                    {/* Feedback Alert: Beginner-Friendly Pedagogical Breakdown */}
-                    <div
-                      className={`rounded-xl border p-4 text-xs leading-relaxed space-y-3 ${
-                        isStepCorrect
-                          ? 'border-emerald-500/40 bg-emerald-50/50 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200'
-                          : 'border-amber-500/40 bg-amber-50/40 text-zinc-900 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-zinc-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 font-bold">
-                        {isStepCorrect ? (
-                          <>
-                            <CheckCircle2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                            <span>Hypothesis Verified & Axiom Proven! (+30 CP)</span>
-                          </>
-                        ) : (
-                          <>
-                            <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                            <span>Natural Classical Intuition — Here's the Quantum Reality:</span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Learner's Selected Thought Breakdown */}
-                      <p className="leading-relaxed">
-                        {selectedOption?.feedback}
-                      </p>
-
-                      {/* If Incorrect: Teach the Correct Principle Like to a Total Beginner */}
-                      {!isStepCorrect && (
-                        <div className="rounded-lg bg-white/80 p-3 border border-amber-500/30 dark:bg-zinc-900/80 dark:border-amber-500/20 space-y-1.5">
-                          <p className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1 text-[11px]">
-                            <LightbulbIcon className="h-3.5 w-3.5 text-amber-600" />
-                            The Correct Quantum Principle Explained Simply:
-                          </p>
-                          <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-xs">
-                            {correctOption.label}
-                          </p>
-                          <p className="text-zinc-600 dark:text-zinc-300 text-[11px]">
-                            {correctOption.feedback}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Axiomatic Punchline / Core Takeaway */}
-                      <div className="rounded-lg bg-purple-500/10 p-2.5 border border-purple-500/20 font-semibold text-purple-900 dark:text-purple-200">
-                        Key Axiom to Remember: {currentStep.socraticPunchline}
-                      </div>
-                    </div>
-
-                    {/* Navigation Buttons: Seamless Forward Progression */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      {activeStepIndex < totalSteps - 1 ? (
-                        <Button
-                          size="sm"
-                          onClick={handleNextStep}
-                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-9 px-4 font-semibold shadow-sm"
-                        >
-                          {isStepCorrect ? 'Advance to Stage ' : 'Understood, Continue to Stage '}
-                          {activeStepIndex + 2} of {totalSteps}
-                          <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
-                        </Button>
-                      ) : (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => setActiveTab('lab')}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 px-4 font-semibold shadow-sm"
-                          >
-                            <FlaskConicalIcon className="mr-1.5 h-3.5 w-3.5" />
-                            {isStepCorrect ? 'Lesson Mastered! Open Practical Lab' : 'Lesson Complete! Open Practical Lab'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => stateStore.adaptiveAdvanceToNext(topic.id)}
-                            className="text-xs h-9 px-3"
-                          >
-                            Next Topic in Journey
-                            <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    <MultimodalQuantumFeedback
+                      isCorrect={isStepCorrect}
+                      conceptTitle={currentStep.stageTitle}
+                      learnerExplanation={selectedOption?.feedback || 'Selected hypothesis evaluation'}
+                      axiomExplanation={
+                        !isStepCorrect
+                          ? `${correctOption.label}: ${correctOption.feedback}`
+                          : `Key Axiom to Remember: ${currentStep.socraticPunchline}`
+                      }
+                      predictedState={{
+                        label: selectedOption?.label.split('—')[0].trim() || (isStepCorrect ? '|+⟩' : '|-⟩'),
+                        theta: 90,
+                        phi: isStepCorrect ? 0 : 180,
+                        prob0: 50,
+                        prob1: 50
+                      }}
+                      targetState={{
+                        label: correctOption.label.split('—')[0].trim() || '|+⟩',
+                        theta: 90,
+                        phi: 0,
+                        prob0: 50,
+                        prob1: 50
+                      }}
+                      onOpenSandbox={() => setActiveTab('lab')}
+                      onNext={
+                        activeStepIndex < totalSteps - 1
+                          ? handleNextStep
+                          : () => setActiveTab('lab')
+                      }
+                      nextLabel={
+                        activeStepIndex < totalSteps - 1
+                          ? `Advance to Stage ${activeStepIndex + 2} of ${totalSteps}`
+                          : 'Open Topic Practical Lab'
+                      }
+                    />
                   </div>
                 )}
               </div>

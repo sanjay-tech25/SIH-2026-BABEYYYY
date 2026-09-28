@@ -107,6 +107,14 @@ async def get_qubot_session(
     db: AsyncSession = Depends(get_db)
 ):
     """GET /api/v1/qubot/session - Retrieves active session and Pomodoro state."""
+    if not current_user:
+        payload = QubotSessionPayload(
+            pomodoro_state="IDLE",
+            iteration=1,
+            break_status="NONE"
+        )
+        return APIResponse(data=payload, message="Active session retrieved")
+
     focus_service = FocusService(db)
     latest = await focus_service.focus_repo.get_latest_session(current_user.id)
     

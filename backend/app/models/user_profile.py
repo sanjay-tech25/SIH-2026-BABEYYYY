@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base, TimestampMixin
@@ -16,5 +17,8 @@ class UserProfile(Base, TimestampMixin):
     current_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     avatar_url: Mapped[str] = mapped_column(String(255), default="default_avatar.png", nullable=False)
+    institution: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, default="Department of Physics & Quantum Computing, IIT Madras")
+    department: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, default="Center for Quantum Information and Computation")
+    learning_goal: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, default="Master Quantum Information Theory & NISQ Algorithms for Quantum Supremacy Benchmark")
 
     user = relationship("User", back_populates="profile")

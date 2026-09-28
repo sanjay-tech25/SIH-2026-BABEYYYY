@@ -6,11 +6,12 @@ export default {content: [
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
-        sans: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
-        serif: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
-        orbitron: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
-        poppins: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
+        display: ['Sora', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans"', 'Poppins', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['Georgia', 'serif'],
+        orbitron: ['Orbitron', 'monospace', 'sans-serif'],
+        poppins: ['Poppins', '"DM Sans"', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
         quanta: {

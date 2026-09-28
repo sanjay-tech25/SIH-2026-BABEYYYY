@@ -25,6 +25,21 @@ class UserProfileSchema(BaseModel):
     current_level: int
     total_xp: int
     avatar_url: str
+    institution: Optional[str] = "Department of Physics & Quantum Computing, IIT Madras"
+    department: Optional[str] = "Center for Quantum Information and Computation"
+    learning_goal: Optional[str] = "Master Quantum Information Theory & NISQ Algorithms for Quantum Supremacy Benchmark"
+
+
+class UserProfileUpdateSchema(BaseModel):
+    display_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    age_bracket: Optional[str] = None
+    persona: Optional[str] = None
+    institution: Optional[str] = None
+    department: Optional[str] = None
+    learning_goal: Optional[str] = None
+    avatar_url: Optional[str] = None
+    role: Optional[str] = None
 
 
 class UserPreferenceSchema(BaseModel):

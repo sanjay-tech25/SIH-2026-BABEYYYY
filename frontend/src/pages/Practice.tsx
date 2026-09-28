@@ -65,6 +65,7 @@ import {
 } from '../services/adaptiveAssessmentEngine';
 import { stateStore } from '../services/stateStore';
 import { apiClient } from '../services/apiClient';
+import { audioEngine } from '../services/audioEngine';
 
 import { InteractiveCircuitQuestion } from '../components/assessment/InteractiveCircuitQuestion';
 import { ParsonsProblemQuestion } from '../components/assessment/ParsonsProblemQuestion';
@@ -187,6 +188,7 @@ export function Practice({
 
     // Update streaks and Dynamic Difficulty Adjustment (DDA)
     if (correct) {
+      audioEngine.playConstructiveInterferenceTone();
       setRightConcepts((prev) => [...prev, concept, conceptId]);
       const nextCorrect = consecutiveCorrect + 1;
       setConsecutiveCorrect(nextCorrect);
@@ -198,6 +200,7 @@ export function Practice({
       );
       setDifficultyTier(nextDiff);
     } else {
+      audioEngine.playDestructiveCancellationTone();
       setWrongConcepts((prev) => [...prev, concept, conceptId]);
       const nextWrong = consecutiveWrong + 1;
       setConsecutiveWrong(nextWrong);

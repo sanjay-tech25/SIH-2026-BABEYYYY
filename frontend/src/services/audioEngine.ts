@@ -277,6 +277,124 @@ class AudioEngine {
   public isFocusAudioActive(): boolean {
     return this.isBinauralPlaying;
   }
+
+  // 7. Quantum Superposition Constructive Resonance (Harmonic Coherent Chime)
+  public playConstructiveInterferenceTone(): void {
+    if (this.muted) return;
+    const ctx = this.initCtx();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Resonant harmonic overtone chord: C5 (523.25), G5 (783.99), C6 (1046.50)
+      const freqs = [523.25, 783.99, 1046.50];
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.001, now);
+      masterGain.gain.linearRampToValueAtTime(0.18, now + 0.05);
+      masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      masterGain.connect(ctx.destination);
+
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        // Subtle phase detune for ethereal quantum interference shimmer
+        osc.detune.setValueAtTime(idx * 3, now);
+        osc.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      });
+    } catch {
+      // Audio autoplay fallback
+    }
+  }
+
+  // 8. Quantum Destructive Wave Interference (Antiphase Cancellation Acoustic Beating)
+  public playDestructiveCancellationTone(): void {
+    if (this.muted) return;
+    const ctx = this.initCtx();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Two frequencies closely detuned to create audible wave interference cancellation (beating at 6 Hz)
+      const f1 = 280.0;
+      const f2 = 286.0;
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.16, now);
+      masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      masterGain.connect(ctx.destination);
+
+      [f1, f2].forEach((freq) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      });
+    } catch {
+      // Audio fallback
+    }
+  }
+
+  // 9. Quantum Phase Sonification: maps relative phase phi (0 - 360 deg) to acoustic pitch and panning
+  public playPhaseShiftTone(phaseDeg: number): void {
+    if (this.muted) return;
+    const ctx = this.initCtx();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const normalizedPhase = ((phaseDeg % 360) + 360) % 360;
+      // Map phase 0..360 to musical frequency range 300Hz .. 900Hz
+      const freq = 350 + (normalizedPhase / 360) * 500;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.2);
+    } catch {
+      // Audio fallback
+    }
+  }
+
+  // 10. Quantum State Measurement Collapse
+  public playQuantumCollapseSound(): void {
+    if (this.muted) return;
+    const ctx = this.initCtx();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } catch {
+      // Audio fallback
+    }
+  }
 }
 
 export const audioEngine = new AudioEngine();

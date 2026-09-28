@@ -1037,6 +1037,53 @@ class ApiClient {
       return { is_active: false };
     }
   }
+
+  // User Profile & Academic Affiliation
+  async getUserProfile() {
+    try {
+      const res = await this.request<any>('/users/me');
+      return res?.data || res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async updateUserProfile(updates: {
+    display_name?: string;
+    email?: string;
+    institution?: string;
+    department?: string;
+    learning_goal?: string;
+    age_bracket?: string;
+    avatar_url?: string;
+    role?: string;
+  }) {
+    try {
+      const res = await this.request<any>('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return res?.data || res;
+    } catch (e) {
+      console.warn('Failed to sync user profile with backend API, local fallback retained:', e);
+      return null;
+    }
+  }
+
+  async getInstructorStudents(): Promise<CohortStudent[]> {
+    return this.getCohortStudents();
+  }
+
+  async exportGradebookCSV(): Promise<string> {
+    const url = `${API_BASE_URL}/instructor/export/gradebook`;
+    const res = await fetch(url, {
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {}
+    });
+    if (!res.ok) {
+      throw new Error('Gradebook export failed');
+    }
+    return await res.text();
+  }
 }
 
 export const apiClient = new ApiClient();
