@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PageMascot } from '../components/quantum/PageMascot';
 import { useGenieReveals } from '../components/ui/useGenieMotion';
 import {
   CompassIcon,
@@ -167,9 +168,24 @@ export function Landing({ onNavigate, onOpenAuth }: LandingProps) {
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 z-10">
 
           {/* Government Recognition Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-950/60 backdrop-blur-md px-4 py-1.5 text-sm font-mono font-bold text-[#f5d626] shadow-sm mb-7">
+          <div className="inline-flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-950/60 backdrop-blur-md px-4 py-1.5 text-sm font-mono font-bold text-[#f5d626] shadow-sm mb-4">
             <span className="flex h-2 w-2 rounded-full bg-[#f5d626] animate-pulse" />
             <span>DPIIT RECOGNIZED • SHAPING AI & QUANTUM COMPUTING</span>
+          </div>
+
+          {/* Welcoming Qubot Mascot */}
+          <div className="mb-4 flex items-center justify-center">
+            <PageMascot
+              pose="welcome"
+              animation="float"
+              size="lg"
+              bubblePosition="right"
+              speechBubble={{
+                title: "QUBOT Companion",
+                text: "Hi! Welcome to QuanTech. Ready to explore quantum computing?",
+                badge: "AI Companion"
+              }}
+            />
           </div>
 
           {/* Futuristic Headline in Orbitron Font */}

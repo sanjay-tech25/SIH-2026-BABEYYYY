@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PageMascot } from '../components/quantum/PageMascot';
 import { 
   ExternalLinkIcon, 
   DownloadIcon, 
@@ -238,14 +239,32 @@ export function OpenLab({ onNavigate }: OpenLabProps = {}) {
             </button>
           </div>
         </div>
-        <h1 className="font-orbitron text-3xl sm:text-4xl font-bold tracking-tight text-[#1a052e] dark:text-white">
-          {activeTab === 'interactive' ? 'Interactive Quantum Mission Lab' : 'Google Colab Master Notebooks'}
-        </h1>
-        <p className="mt-2 font-poppins text-base text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-          {activeTab === 'interactive' 
-            ? 'Execute real circuit missions with live Qiskit Aer simulation, Bloch sphere inspection, and Socratic diagnosis.'
-            : 'Pre-configured cloud Jupyter notebooks designed for hands-on hypothesis testing in Google Colab with Qiskit.'}
-        </p>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mt-4">
+          <div>
+            <h1 className="font-orbitron text-3xl sm:text-4xl font-bold tracking-tight text-[#1a052e] dark:text-white">
+              {activeTab === 'interactive' ? 'Interactive Quantum Mission Lab' : 'Google Colab Master Notebooks'}
+            </h1>
+            <p className="mt-2 font-poppins text-base text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              {activeTab === 'interactive' 
+                ? 'Execute real circuit missions with live Qiskit Aer simulation, Bloch sphere inspection, and Socratic diagnosis.'
+                : 'Pre-configured cloud Jupyter notebooks designed for hands-on hypothesis testing in Google Colab with Qiskit.'}
+            </p>
+          </div>
+
+          <div className="shrink-0 self-center lg:self-auto hidden sm:flex items-center pr-2">
+            <PageMascot
+              pose="coder"
+              animation="float"
+              size="md"
+              bubblePosition="left"
+              speechBubble={{
+                title: "Quantum Coder",
+                text: "Two-way Colab bridge active! Test circuits locally or launch in cloud notebooks.",
+                badge: "Qiskit + PennyLane"
+              }}
+            />
+          </div>
+        </div>
       </header>
 
       {/* 2. Interactive Chapter Lab Tab */}

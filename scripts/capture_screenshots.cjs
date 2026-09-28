@@ -39,7 +39,7 @@ async function capture() {
   
   console.log('Loading http://localhost:6500...');
   await page.goto('http://localhost:6500', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => new Promise((r) => setTimeout(r, 2000)));
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 2500)));
 
   async function navigateTo(label) {
     await page.evaluate((navLabel) => {
@@ -52,7 +52,7 @@ async function capture() {
       }
       return false;
     }, label);
-    await page.evaluate(() => new Promise((r) => setTimeout(r, 2000)));
+    await page.evaluate(() => new Promise((r) => setTimeout(r, 2500)));
   }
 
   console.log('1. Capturing Dashboard...');
@@ -83,12 +83,8 @@ async function capture() {
   await page.screenshot({ path: path.join(screenshotsDir, '07_progress_analytics.png') });
 
   console.log('8. Capturing Landing Page...');
-  await page.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll('button'));
-    const logoutBtn = btns.find(b => b.innerText && (b.innerText.includes('Sign out') || b.innerText.includes('Log out') || b.innerText.includes('Logout')));
-    if (logoutBtn) logoutBtn.click();
-  });
-  await page.evaluate(() => new Promise((r) => setTimeout(r, 2000)));
+  await navigateTo('Exit to Overview');
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 2500)));
   await page.screenshot({ path: path.join(screenshotsDir, '00_landing_page.png') });
 
   await browser.close();

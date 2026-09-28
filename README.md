@@ -73,6 +73,21 @@
 ![Progress Analytics](docs/screenshots/07_progress_analytics.png)
 *Cryptographically verifiable skill badges, calibration tracking, and longitudinal focus metrics.*
 
+<br/>
+
+### 🤖 Expressive Companion: Contextual Mascot Poses & Animations
+
+| Page / View | Mascot Pose Asset | Animation Effect | Pedagogical Role |
+| :--- | :--- | :--- | :--- |
+| **Project Landing** | `mascot_welcome.png` | `float` + Quantum Aura | Welcoming learners with open arms into the quantum ecosystem |
+| **Student Dashboard** | `mascot_guide.png` | `float` + Cyan Pulse | Providing active guidance & daily mission recommendations |
+| **Interactive Quantum Lab** | `mascot_builder.png` | `breathe` + Orbital Spin | Holding a glowing qubit while constructing gates & quantum circuits |
+| **Knowledge Graph DAG** | `mascot_navigator.png` | `float` + Purple Wave | Charting prerequisite paths with navigational roadmap scroll |
+| **11-Chapter Courses** | `mascot_scholar.png` | `breathe` + Cyan Glow | Guiding systematic curriculum study with the Quantum textbook |
+| **Quantum Assessments** | `mascot_thinking.png` | `float` + Amber Insight | Pensive analytical reasoning through Socratic diagnostic katas |
+| **Open Lab & Colab** | `mascot_coder.png` | `float` + Emerald Terminal | Rapid Qiskit Python prototyping on a holographic laptop |
+| **Cognitive Progress** | `mascot_celebrating.png` | `bounce` + Golden Radiance | Celebrating concept mastery, streak milestones, and Skill Badges |
+
 </div>
 
 ---
@@ -301,6 +316,7 @@ sih2026/
 │   ├── Concepts/                        # 107 Curated markdown notes with 749 wikilinks
 │   └── Algorithms/                      # Verified quantum algorithm references
 ├── docs/
+│   ├── mascot/                          # Expressive Qubot poses & transparent character assets
 │   └── screenshots/                     # Real, high-resolution application screenshots
 ├── scripts/
 │   └── capture_screenshots.cjs          # Automated screenshot capture utility

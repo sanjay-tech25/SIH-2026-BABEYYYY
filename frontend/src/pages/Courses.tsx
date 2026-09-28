@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { PageMascot } from '../components/quantum/PageMascot';
 import { 
   BookOpenIcon, 
   RouteIcon, 
@@ -79,7 +80,7 @@ export function Courses({ onNavigate }: CoursesProps) {
       {/* Course Architecture & Journey Correlation Banner */}
       <Card className="p-6 sm:p-7 border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-zinc-900/40 to-emerald-500/10">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
+          <div className="space-y-2 max-w-lg lg:max-w-xl">
             <div className="flex items-center gap-2">
               <span className="flex h-6 items-center rounded-full bg-indigo-600 px-2.5 text-[11px] font-bold text-white uppercase tracking-wider">
                 Academic Syllabi Reference
@@ -98,20 +99,29 @@ export function Courses({ onNavigate }: CoursesProps) {
             </p>
           </div>
 
-          <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col gap-3">
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 shadow-md flex items-center justify-center gap-2"
-              onClick={() => onNavigate('path')}
-            >
-              <RouteIcon className="h-4 w-4" />
-              <span>Go to Curriculum Journey</span>
-            </Button>
-            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center flex items-center justify-center gap-1.5">
-              <ShieldAlertIcon className="h-3.5 w-3.5 text-amber-500" />
-              <span>Lessons accessible via Journey only</span>
+          <div className="shrink-0 flex items-center justify-center gap-6">
+            <div className="flex flex-col gap-3">
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 shadow-md flex items-center justify-center gap-2"
+                onClick={() => onNavigate('path')}
+              >
+                <RouteIcon className="h-4 w-4" />
+                <span>Go to Curriculum Journey</span>
+              </Button>
+              <div className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center flex items-center justify-center gap-1.5">
+                <ShieldAlertIcon className="h-3.5 w-3.5 text-amber-500" />
+                <span>Lessons accessible via Journey only</span>
+              </div>
+            </div>
+            <div className="hidden sm:block">
+              <PageMascot
+                pose="scholar"
+                animation="float"
+                size="md"
+              />
             </div>
           </div>
-        </div>
+      </div>
 
         {/* Quick Stats Grid */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 border-t border-zinc-200/60 dark:border-zinc-800/80">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PageMascot } from '../components/quantum/PageMascot';
 import {
   TrendingUpIcon,
   ClockIcon,
@@ -154,6 +155,21 @@ export function Progress({ onNavigate }: ProgressProps) {
       <PageHeader
         title="Curriculum Progress & Learning Analytics"
         subtitle="Continuous telemetry, concept retention tracking, laboratory experiment verification, and study velocity."
+        action={
+          <div className="shrink-0 hidden sm:flex items-center">
+            <PageMascot
+              pose="celebrating"
+              animation="bounce"
+              size="md"
+              bubblePosition="left"
+              speechBubble={{
+                title: "Quantum Mastery",
+                text: "Congratulations on your progress! Verified skill passport active.",
+                badge: "Skill Passport"
+              }}
+            />
+          </div>
+        }
       />
 
       {/* Top 5 Metrics Row */}

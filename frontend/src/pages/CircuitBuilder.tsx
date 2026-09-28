@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { PageMascot } from '../components/quantum/PageMascot';
 import { GeniePresence } from '../components/ui/GenieMotion';
 import {
   PlayIcon,
@@ -736,7 +737,7 @@ export function CircuitBuilder() {
     <div className="space-y-10">
       {/* Top Editorial Header */}
       <header className="border-b border-purple-100/80 pb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 w-full">
           <div>
             <div className="flex items-center gap-2">
               <span className="flex h-2.5 w-2.5 rounded-full bg-[#f5d626] animate-pulse" />
@@ -751,6 +752,21 @@ export function CircuitBuilder() {
               Inject single-qubit rotations and multi-qubit entanglement gates. Simulate quantum algorithms with real-time 3D Bloch vectors and column probability graphs.
             </p>
           </div>
+
+          <div className="shrink-0 self-center lg:self-auto flex items-center pr-2">
+            <PageMascot
+              pose="builder"
+              animation="float"
+              size="md"
+              bubblePosition="left"
+              speechBubble={{
+                title: "Quantum Composer",
+                text: "Qiskit Aer simulator active! Drag gates onto wires to inspect wavefunction collapse.",
+                badge: "Statevector Lab"
+              }}
+            />
+          </div>
+        </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* INTERACTIVE DROPDOWN LIST MENU FOR ALL PRESETS */}
@@ -870,7 +886,6 @@ export function CircuitBuilder() {
               <span>🥽 AR/VR Spatial Studio</span>
             </button>
           </div>
-        </div>
       </header>
 
       {/* FEATURED QUANTUM PRESETS GALLERY (Unboxed Editorial Section) */}

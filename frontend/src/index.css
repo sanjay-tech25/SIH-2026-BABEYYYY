@@ -99,6 +99,68 @@ code, pre, kbd, samp {
   animation: shimmer-sweep 5s linear infinite;
 }
 
+/* QUBOT Expressive Mascot Keyframes */
+@keyframes mascot-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1.5deg);
+  }
+}
+
+@keyframes mascot-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-14px) scale(1.04);
+  }
+  60% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+@keyframes mascot-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes mascot-aura-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.12);
+    opacity: 0.75;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.4;
+  }
+}
+
+.animate-mascot-float {
+  animation: mascot-float 4.5s ease-in-out infinite;
+}
+
+.animate-mascot-bounce {
+  animation: mascot-bounce 2.8s ease-in-out infinite;
+}
+
+.animate-mascot-breathe {
+  animation: mascot-breathe 3.6s ease-in-out infinite;
+}
+
+.animate-mascot-aura {
+  animation: mascot-aura-spin 8s linear infinite;
+}
+
 /* GPU acceleration & smooth transitions */
 .gpu-accelerated {
   transform: translateZ(0);

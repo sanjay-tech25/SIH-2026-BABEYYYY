@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PageMascot } from '../components/quantum/PageMascot';
 import { ArrowRightIcon, ClockIcon, PlayIcon, CheckIcon, SparklesIcon, TargetIcon, BookOpenIcon, CompassIcon } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -82,21 +83,37 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   return (
     <div className="space-y-12">
-      {/* Live Learner Greeting — "Hello, shall we start?" */}
-      <section>
-        <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-          {todayFormatted}
-        </p>
-        <h1 className="mt-2 max-w-2xl font-display text-[2.25rem] font-bold leading-[1.1] tracking-[-0.03em] text-zinc-900 dark:text-zinc-50">
-          {isBrandNew
-            ? `Hello, ${user.name}! Shall we start?`
-            : `Welcome back, ${user.name}. Let's advance your quantum roadmap.`}
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          {isBrandNew
-            ? 'Welcome to your quantum computing journey. Your path begins from the ground up with the mathematics of qubits, Dirac notation, and superposition.'
-            : `Today's recommended trajectory takes approximately ${minutesToday} minutes across theory and verified laboratory missions.`}
-        </p>
+      {/* Live Learner Greeting & Qubot Companion Guide */}
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            {todayFormatted}
+          </p>
+          <h1 className="mt-2 max-w-2xl font-display text-[2.25rem] font-bold leading-[1.1] tracking-[-0.03em] text-zinc-900 dark:text-zinc-50">
+            {isBrandNew
+              ? `Hello, ${user.name}! Shall we start?`
+              : `Welcome back, ${user.name}. Let's advance your quantum roadmap.`}
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            {isBrandNew
+              ? 'Welcome to your quantum computing journey. Your path begins from the ground up with the mathematics of qubits, Dirac notation, and superposition.'
+              : `Today's recommended trajectory takes approximately ${minutesToday} minutes across theory and verified laboratory missions.`}
+          </p>
+        </div>
+
+        <div className="shrink-0 self-center sm:self-auto sm:pr-4 pt-2">
+          <PageMascot
+            pose="guide"
+            animation="float"
+            size="lg"
+            bubblePosition="left"
+            speechBubble={{
+              title: "QUBOT Companion",
+              text: isBrandNew ? "Hello! Let's explore quantum computing together." : "Welcome back! Ready for today's mission?",
+              badge: "Personal Guide"
+            }}
+          />
+        </div>
       </section>
 
       {/* Hero Action: Start Journey or Pick up where you left off */}

@@ -17,7 +17,6 @@ import { Results } from './pages/Results';
 import { Landing } from './pages/Landing';
 import { Onboarding } from './pages/Onboarding';
 import { AuthModal } from './components/AuthModal';
-import { QubotCompanion } from './components/quantum/QubotCompanion';
 import { SectionErrorBoundary } from './components/ui/SectionErrorBoundary';
 import type { NavId, ViewId } from './data/appData';
 import { stateStore, type AppState } from './services/stateStore';
@@ -265,8 +264,6 @@ export function App() {
           go('path');
         }}
       />
-
-      <QubotCompanion onNavigate={go} />
     </div>
   );
 }
