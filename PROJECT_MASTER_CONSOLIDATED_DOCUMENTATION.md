@@ -110,9 +110,11 @@ flowchart TB
 
 ## Visual Screen Wireframes & UI Layouts (Screenshots)
 
-To provide an exact visual representation of the built user experience, the following wireframes illustrate the key interactive screens across the QUBOT platform:
+To provide an exact visual representation of the built user experience, the following high-resolution production captures and wireframes illustrate the key interactive screens across the QUBOT platform:
 
 ### 1. Main Student Dashboard & Adaptive Roadmap Screen
+
+![Main Student Dashboard](docs/screenshots/01_dashboard.png)
 
 ```
 +----------------------------------------------------------------------------------------------------+
@@ -137,6 +139,8 @@ To provide an exact visual representation of the built user experience, the foll
 
 ### 2. Interactive Quantum Lab & Circuit Builder Screen
 
+![Interactive Quantum Circuit Builder](docs/screenshots/02_circuit_builder.png)
+
 ```
 +----------------------------------------------------------------------------------------------------+
 |  QUANTUM LAB | Circuit: Bell State Generator | Framework: Qiskit Aer | Qubits: 2 | Depth: 2        |
@@ -158,6 +162,20 @@ To provide an exact visual representation of the built user experience, the foll
 | |11>: [####################               ] 49.8% (510)     | Entangled: TRUE (Concurrence: 1.0)   |
 +-------------------------------------------------------------+--------------------------------------+
 ```
+
+### 2.1 Topological Knowledge Graph (Concept DAG) & Curriculum Showcase
+
+![Topological Knowledge Graph DAG](docs/screenshots/03_learning_path_dag.png)
+
+![11-Chapter Quantum Curriculum](docs/screenshots/04_courses_curriculum.png)
+
+### 2.2 Quantum Assessment, Colab Integration & Skill Passport
+
+![Quantum Assessment and Placement](docs/screenshots/05_assessment_diagnostic.png)
+
+![Open Quantum Simulation Lab & Colab](docs/screenshots/06_open_lab.png)
+
+![Quantum Skill Passport & Telemetry](docs/screenshots/07_progress_analytics.png)
 
 ### 3. Lesson Experience with Socratic AI Tutor Drawer
 
