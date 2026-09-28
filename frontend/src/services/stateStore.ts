@@ -400,7 +400,7 @@ class StateStore {
 
 
 
-  public completeLesson(lessonId: string, chapterId: string, xpEarned = 50) {
+  public completeLesson(lessonId: string, chapterId: string, xpEarned: number = 50) {
     if (!this.state.progress.completedLessons.includes(lessonId)) {
       this.state.progress.completedLessons.push(lessonId);
     }
@@ -427,7 +427,7 @@ class StateStore {
     this.saveState();
   }
 
-  public completeLab(labId: string, chapterId: string, xpEarned = 75) {
+  public completeLab(labId: string, chapterId: string, xpEarned: number = 75) {
     if (!this.state.progress.completedLabs.includes(labId)) {
       this.state.progress.completedLabs.push(labId);
     }
@@ -455,7 +455,7 @@ class StateStore {
     this.saveState();
   }
 
-  public recordQuizResult(quizId: string, isCorrect: boolean, xpEarned = 40) {
+  public recordQuizResult(quizId: string, isCorrect: boolean, xpEarned: number = 40) {
     this.state.progress.totalQuizAttempts += 1;
     this.recordTodayActivity(5);
     if (isCorrect) {
@@ -685,7 +685,7 @@ class StateStore {
     this.saveState();
   }
 
-  public recordAssessmentSession(attempt: AssessmentAttemptRecord, xpEarned = 60) {
+  public recordAssessmentSession(attempt: AssessmentAttemptRecord, xpEarned: number = 60) {
     if (!this.state.progress.pastAssessmentAttempts) {
       this.state.progress.pastAssessmentAttempts = [];
     }
@@ -706,7 +706,7 @@ class StateStore {
     this.saveState();
   }
 
-  public awardFocusXP(amount = 40, label = 'Pomodoro Deep Focus Block') {
+  public awardFocusXP(amount: number = 40, label: string = 'Pomodoro Deep Focus Block') {
     this.addXP(amount);
     this.logSession(label, 'theory', Math.round(amount === 15 ? 5 : 25), amount);
     this.saveState();

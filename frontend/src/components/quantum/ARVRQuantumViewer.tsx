@@ -207,7 +207,7 @@ export function ARVRQuantumViewer({
 
   // Web Audio Harmonic Polyphonic Synthesizer
   const playHarmonicSound = useCallback(
-    (freqBase: number, type: OscillatorType = 'sine', pan = 0) => {
+    (freqBase: number, type: OscillatorType = 'sine', pan: number = 0) => {
       if (!audioEnabled) return;
       try {
         const AudioContextClass =
@@ -482,7 +482,7 @@ export function ARVRQuantumViewer({
   // Core 3D Hologram Spatial Rendering Function
   const render3DHologramFrame = (
     canvas: HTMLCanvasElement,
-    eyeOffset = 0,
+    eyeOffset: number = 0,
     width: number,
     height: number,
     timeMs: number
