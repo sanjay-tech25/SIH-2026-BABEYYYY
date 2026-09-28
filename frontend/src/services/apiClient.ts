@@ -192,17 +192,22 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: response.statusText }));
-      throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      // Allow caller fallback handling
+      throw err;
     }
-
-    return await response.json();
   }
 
   // Auth endpoints
@@ -795,246 +800,6 @@ class ApiClient {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
-  }
-
-  async executeSandboxCode(code: string, timeoutSeconds = 5.0) {
-    try {
-      const res = await this.request<{ data: any }>('/circuits/sandbox/execute', {
-        method: 'POST',
-        body: JSON.stringify({ code, timeout_seconds: timeoutSeconds }),
-      });
-      return res.data;
-    } catch (e) {
-      return {
-        success: true,
-        stdout: 'Local sandbox execution simulation: Quantum circuit initialized and measured successfully.',
-        stderr: '',
-        execution_time_ms: 22.4,
-        violations: [],
-        circuit_found: true,
-        metrics: { execution_mode: 'local_fallback_sandbox' },
-      };
-    }
-  }
-
-  // Hardware Backends & Cloud Quantum Execution
-
-  async listQBraidDevices() {
-    try {
-      const res = await this.request<{ data: any[] }>('/circuits/qbraid/devices');
-      return res.data;
-    } catch (e) {
-      return [
-        {
-          device_id: 'aws_sv1',
-          name: 'Amazon Braket SV1 State Vector Simulator',
-          provider: 'AWS / qBraid',
-          status: 'ONLINE',
-          max_qubits: 34,
-          frameworks: ['qiskit', 'cirq', 'pennylane'],
-        },
-        {
-          device_id: 'qbraid_qir_virtual',
-          name: 'qBraid Quantum Intermediate Representation (QIR) Target',
-          provider: 'qBraid',
-          status: 'ONLINE',
-          max_qubits: 32,
-          frameworks: ['qiskit', 'cirq', 'openqasm'],
-        },
-      ];
-    }
-  }
-
-
-  async submitHardwareJob(circuitJson: any, backendName = 'ibm_brisbane', shots = 1024, apiToken?: string) {
-    try {
-      const res = await this.request<{ data: any }>('/circuits/hardware/submit', {
-        method: 'POST',
-        body: JSON.stringify({
-          circuit_json: circuitJson,
-          backend_name: backendName,
-          shots,
-          api_token: apiToken,
-        }),
-      });
-      return res.data;
-    } catch (e) {
-      return {
-        job_id: 'ibmq_job_mock_' + Date.now(),
-        backend_name: backendName,
-        status: 'COMPLETED',
-        queue_position: 0,
-        shots,
-        created_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-        ideal_counts: { '00': Math.floor(shots / 2), '11': Math.ceil(shots / 2) },
-        hardware_counts: { '00': Math.floor(shots * 0.48), '01': Math.floor(shots * 0.02), '10': Math.floor(shots * 0.02), '11': Math.floor(shots * 0.48) },
-        calibration_metrics: { t1_avg_us: 248.5, readout_fidelity: 0.988 },
-        total_variation_distance: 0.04,
-        fidelity_score: 0.96,
-      };
-    }
-  }
-
-
-  async listHardwareBackends() {
-    try {
-      const res = await this.request<{ data: any[] }>('/circuits/hardware/backends');
-      return res.data;
-    } catch (e) {
-      return [
-        {
-          backend_name: 'ibm_brisbane',
-          num_qubits: 127,
-          status: 'online',
-          queue_depth: 12,
-          basis_gates: ['ecr', 'id', 'rz', 'sx', 'x'],
-          t1_avg_us: 248.5,
-          t2_avg_us: 132.8,
-          avg_readout_error: 0.012,
-          avg_cnot_error: 0.0078,
-          description: 'Eagle r3 processor with heavy-hex topology and 127 operational qubits.',
-        },
-        {
-          backend_name: 'ibm_kyoto',
-          num_qubits: 127,
-          status: 'online',
-          queue_depth: 8,
-          basis_gates: ['ecr', 'id', 'rz', 'sx', 'x'],
-          t1_avg_us: 215.0,
-          t2_avg_us: 110.4,
-          avg_readout_error: 0.015,
-          avg_cnot_error: 0.0084,
-          description: 'Eagle r3 127-qubit system optimized for utility-scale quantum exploration.',
-        },
-      ];
-    }
-  }
-
-
-  async optimizeCircuit(circuitJson: any, optimizationLevel = 2) {
-    try {
-      const res = await this.request<{ data: any }>('/circuits/optimize', {
-        method: 'POST',
-        body: JSON.stringify({ circuit_json: circuitJson, optimization_level: optimizationLevel }),
-      });
-      return res.data;
-    } catch (e) {
-      const initialCount = circuitJson?.gates?.length || 0;
-      return {
-        initial_gate_count: initialCount,
-        optimized_gate_count: Math.max(1, initialCount - 1),
-        gate_count_reduction: 1,
-        initial_depth: 3,
-        optimized_depth: 2,
-        depth_reduction_pct: 33.3,
-        estimated_fidelity_gain_pct: 8.5,
-        optimization_level: optimizationLevel,
-        optimization_notes: ['Fused rotational angles', 'Cancelled adjacent self-inverse operations'],
-        optimized_circuit_json: circuitJson,
-      };
-    }
-  }
-
-  // --- Core Learning Progress & Assessments ---
-
-  async getProgressSummary() {
-    try {
-      const res = await this.request<any>('/progress/summary');
-      return res?.data || res;
-    } catch (e) {
-      return {
-        current_level: 4,
-        total_xp: 3450,
-        xp_in_level: 450,
-        xp_needed_next_level: 1500,
-        streak: { current_streak: 5, longest_streak: 12, freeze_tokens_available: 2, active_today: true },
-        completed_lessons_count: 14,
-        concept_masteries: [
-          { concept_id: 'math_foundations', concept_name: 'Linear Algebra & Bra-Ket', category: 'FOUNDATIONAL', mastery_score: 0.95, mastery_level: 'MASTERED' },
-          { concept_id: 'bloch_sphere', concept_name: 'Bloch Sphere & Relative Phase', category: 'CORE', mastery_score: 0.91, mastery_level: 'MASTERED' },
-          { concept_id: 'single_qubit_gates', concept_name: 'Unitary Operations & Pauli Gates', category: 'CORE', mastery_score: 0.83, mastery_level: 'PROFICIENT' },
-          { concept_id: 'entanglement', concept_name: 'Bell States & Quantum Teleportation', category: 'ADVANCED', mastery_score: 0.71, mastery_level: 'DEVELOPING' }
-        ]
-      };
-    }
-  }
-
-  async getAchievements() {
-    try {
-      const res = await this.request<any>('/achievements');
-      return res?.data || res;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  async getLesson(lessonId: string) {
-    try {
-      const res = await this.request<any>(`/lessons/${lessonId}`);
-      return res?.data || res;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  async completeLesson(lessonId: string, timeSpentSeconds = 180) {
-    try {
-      const res = await this.request<any>(`/lessons/${lessonId}/complete`, {
-        method: 'POST',
-        body: JSON.stringify({ time_spent_seconds: timeSpentSeconds })
-      });
-      return res?.data || res;
-    } catch (e) {
-      return { completed: true, xp_awarded: 50, lesson_id: lessonId };
-    }
-  }
-
-  async getAssessment(assessmentId: string) {
-    try {
-      const res = await this.request<any>(`/assessments/${assessmentId}`);
-      return res?.data || res;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  async submitAssessment(assessmentId: string, answers: Array<{ question_id: string; selected_option_id: string }>) {
-    try {
-      const res = await this.request<any>(`/assessments/${assessmentId}/submit`, {
-        method: 'POST',
-        body: JSON.stringify({ answers })
-      });
-      return res?.data || res;
-    } catch (e) {
-      return {
-        score_percentage: 85.0,
-        passed: true,
-        xp_earned: 100,
-        feedback: []
-      };
-    }
-  }
-
-  async startFocusSession(targetDurationSeconds = 1500) {
-    try {
-      const res = await this.request<any>('/focus/start', {
-        method: 'POST',
-        body: JSON.stringify({ target_duration_seconds: targetDurationSeconds })
-      });
-      return res?.data || res;
-    } catch (e) {
-      return { is_active: true, break_duration_seconds: 300 };
-    }
-  }
-
-  async completeFocusSession() {
-    try {
-      const res = await this.request<any>('/focus/complete', { method: 'POST' });
-      return res?.data || res;
-    } catch (e) {
-      return { is_active: false };
     }
   }
 }

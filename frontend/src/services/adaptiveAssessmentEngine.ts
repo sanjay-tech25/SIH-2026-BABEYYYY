@@ -162,7 +162,7 @@ export class AdaptiveAssessmentEngine {
   public static getRecommendation(
     averageMastery: number,
     weakestConceptName?: string,
-    foundationalBreach = false,
+    foundationalBreach: boolean = false,
     failedConcepts: string[] = []
   ): AssessmentRecommendation {
     const isPassed = averageMastery >= 0.70 && !foundationalBreach;
@@ -293,7 +293,7 @@ export class AdaptiveAssessmentEngine {
     chapterNumber: number,
     phase: AssessmentPhase,
     pastScores: Record<string, number>, // e.g. { 'ch-1-mcq': 85, 'ch-1-circuit': 100 }
-    userPlacedLevel = 1
+    userPlacedLevel: number = 1
   ): PhaseUnlockStatus {
     const complexity = this.getChapterComplexity(chapterNumber);
     const mcqKey = `ch-${chapterNumber}-mcq`;

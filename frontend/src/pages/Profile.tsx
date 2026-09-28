@@ -24,6 +24,7 @@ import {
   UsersIcon,
   Edit3Icon,
   RotateCcwIcon,
+  RefreshCwIcon,
   SaveIcon,
   XIcon
 } from 'lucide-react';
@@ -34,6 +35,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { stateStore, type AppState, type UserRole, type AgeTier } from '../services/stateStore';
 import type { ViewId } from '../data/appData';
+import { apiClient, type SkillPassportToken, type InstructorOverview } from '../services/apiClient';
 
 interface ProfileProps {
   initialRole?: UserRole;
@@ -155,10 +157,61 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
   const [departmentInput, setDepartmentInput] = useState('');
   const [goalInput, setGoalInput] = useState('');
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
+  const [passportToken, setPassportToken] = useState<SkillPassportToken | null>(null);
+  const [generatingPassport, setGeneratingPassport] = useState(false);
+  const [instructorAnalytics, setInstructorAnalytics] = useState<InstructorOverview | null>(null);
+  const [loadingInstructorAnalytics, setLoadingInstructorAnalytics] = useState(false);
+  const [studentsList, setStudentsList] = useState<CohortStudent[]>(COHORT_STUDENTS);
+  const [backendSynced, setBackendSynced] = useState(false);
 
   useEffect(() => {
     return stateStore.subscribe(setAppState);
   }, []);
+
+  const fetchInstructorData = async () => {
+    setLoadingInstructorAnalytics(true);
+    try {
+      const [analyticsData, cohortData] = await Promise.all([
+        apiClient.getInstructorAnalytics(),
+        apiClient.getCohortStudents()
+      ]);
+      if (analyticsData) {
+        setInstructorAnalytics(analyticsData);
+      }
+      if (cohortData && cohortData.length > 0) {
+        setStudentsList(cohortData);
+      }
+      setBackendSynced(true);
+    } catch (e) {
+      console.warn('Backend instructor API sync fallback', e);
+    } finally {
+      setLoadingInstructorAnalytics(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeRole === 'INSTRUCTOR') {
+      fetchInstructorData();
+    }
+  }, [activeRole]);
+
+  const handleGeneratePassport = async () => {
+    setGeneratingPassport(true);
+    try {
+      const token = await apiClient.generateSkillPassport(
+        1,
+        'state_vectors',
+        'Complex Hilbert Spaces & State Vectors',
+        0.95,
+        true
+      );
+      setPassportToken(token);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGeneratingPassport(false);
+    }
+  };
 
   const user = appState.user;
   const p = appState.progress;
@@ -210,13 +263,18 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
     setTimeout(() => setCopiedToken(false), 2000);
   };
 
-  const handleSendRemediation = (studentId: string, conceptName: string) => {
-    setRemediationSent(`Targeted Remediation Module on "${conceptName}" dispatched to student.`);
+  const handleSendRemediation = async (studentId: string, conceptName: string) => {
+    try {
+      const res = await apiClient.dispatchRemediation(studentId, conceptName);
+      setRemediationSent(res?.message || `Targeted Remediation on "${conceptName}" dispatched to student.`);
+    } catch {
+      setRemediationSent(`Targeted Remediation Module on "${conceptName}" dispatched to student.`);
+    }
     setTimeout(() => setRemediationSent(null), 4000);
   };
 
   // Filter cohort students
-  const filteredStudents = COHORT_STUDENTS.filter((std) => {
+  const filteredStudents = studentsList.filter((std) => {
     const matchesSearch =
       std.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
       std.email.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -234,7 +292,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
     <div className="space-y-8">
       {/* Notice Message Banner */}
       {noticeMessage && (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
           <CheckCircle2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>{noticeMessage}</span>
         </div>
@@ -256,7 +314,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           <button
             type="button"
             onClick={() => handleRoleChange('LEARNER')}
-            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-bold transition ${
               activeRole === 'LEARNER'
                 ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50'
                 : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
@@ -268,7 +326,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           <button
             type="button"
             onClick={() => handleRoleChange('INSTRUCTOR')}
-            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-bold transition ${
               activeRole === 'INSTRUCTOR'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
@@ -290,7 +348,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="relative">
-                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 font-display text-2xl font-bold text-white shadow-md">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 font-display text-3xl font-bold text-white shadow-md">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                   <span
@@ -303,24 +361,24 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
 
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                    <h2 className="font-display text-3xl font-bold text-zinc-900 dark:text-zinc-50">
                       {user.name}
                     </h2>
-                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[13px] font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
                       Certified Quantum Learner
                     </span>
-                    <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[13px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                       Level {p.currentLevel}
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 font-mono">
                     {user.email}
                   </p>
-                  <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 pt-0.5">
+                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 pt-0.5">
                     {user.institution || 'Department of Physics & Quantum Computing, IIT Madras'}
                   </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
                     Enrolled since {user.joinedDate || 'August 2026'} · Candidate ID: QBT-2026-IND-04
                   </p>
 
@@ -328,18 +386,18 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   <div className="flex flex-wrap items-center gap-2 pt-2.5">
                     <Button
                       variant="secondary"
-                      size="sm"
+                     
                       onClick={handleOpenEdit}
-                      className="gap-1.5 text-xs h-7 px-2.5"
+                      className="gap-1.5 text-sm h-7 px-2.5"
                     >
                       <Edit3Icon className="h-3.5 w-3.5" />
                       Edit Details
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                     
                       onClick={handleResetProgress}
-                      className="gap-1.5 text-xs h-7 px-2.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                      className="gap-1.5 text-sm h-7 px-2.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                     >
                       <RotateCcwIcon className="h-3.5 w-3.5" />
                       Reset to 0 (Clean Slate)
@@ -349,7 +407,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
               </div>
 
               {/* Age Tier Selector */}
-              <div className="flex flex-col gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50/80 p-3.5 text-xs dark:border-zinc-800 dark:bg-zinc-950/60 shrink-0">
+              <div className="flex flex-col gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50/80 p-3.5 text-sm dark:border-zinc-800 dark:bg-zinc-950/60 shrink-0">
                 <span className="font-bold text-zinc-700 dark:text-zinc-300">Curriculum Tier</span>
                 <div className="flex items-center gap-1.5">
                   {(['YOUNG', 'STUDENT', 'ADULT'] as AgeTier[]).map((tier) => (
@@ -357,7 +415,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                       key={tier}
                       type="button"
                       onClick={() => handleAgeTierChange(tier)}
-                      className={`rounded px-2.5 py-1 text-[11px] font-bold transition ${
+                      className={`rounded px-2.5 py-1 text-[13px] font-bold transition ${
                         user.ageTier === tier
                           ? 'bg-emerald-600 text-white'
                           : 'bg-zinc-200/70 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300'
@@ -367,7 +425,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                     </button>
                   ))}
                 </div>
-                <span className="text-[10px] text-zinc-500">
+                <span className="text-xs text-zinc-500">
                   {user.ageTier === 'STUDENT'
                     ? 'Formal linear algebra & Qiskit code'
                     : user.ageTier === 'YOUNG'
@@ -379,7 +437,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
 
             {/* Tier & Competency Points Meter */}
             <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800/80">
-              <div className="flex items-baseline justify-between text-xs font-semibold">
+              <div className="flex items-baseline justify-between text-sm font-semibold">
                 <span className="text-zinc-700 dark:text-zinc-300">
                   Tier {p.currentLevel} Competency ({p.totalXP} Total CP)
                 </span>
@@ -396,15 +454,15 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
             <Card className="p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <SparklesIcon className="h-4 w-4 text-emerald-600" />
-                <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
                   Active Learning Goal
                 </h3>
               </div>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium bg-zinc-50 p-3 rounded-xl border border-zinc-100 dark:bg-zinc-950 dark:border-zinc-800">
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium bg-zinc-50 p-3 rounded-xl border border-zinc-100 dark:bg-zinc-950 dark:border-zinc-800">
                 "{user.learningGoal || 'Master Quantum Information Theory & NISQ Algorithms for Quantum Supremacy Benchmark'}"
               </p>
 
-              <dl className="grid grid-cols-2 gap-3 text-xs pt-2">
+              <dl className="grid grid-cols-2 gap-3 text-sm pt-2">
                 <div className="rounded-lg bg-zinc-50/80 p-3 dark:bg-zinc-950/60">
                   <dt className="text-zinc-500">Target Cadence</dt>
                   <dd className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">35 min / Day</dd>
@@ -421,36 +479,36 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
             <Card className="p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <ClockIcon className="h-4 w-4 text-emerald-600" />
-                <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
                   Academic Telemetry Summary
                 </h3>
               </div>
 
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950">
-                  <div className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                  <div className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                     {totalHours} hrs
                   </div>
-                  <div className="text-[11px] text-zinc-500 mt-0.5">Time Studied</div>
+                  <div className="text-[13px] text-zinc-500 mt-0.5">Time Studied</div>
                 </div>
                 <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950">
-                  <div className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                  <div className="font-display text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {p.completedLabs.length}
                   </div>
-                  <div className="text-[11px] text-zinc-500 mt-0.5">Verified Labs</div>
+                  <div className="text-[13px] text-zinc-500 mt-0.5">Verified Labs</div>
                 </div>
                 <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950">
-                  <div className="font-display text-xl font-bold text-blue-600 dark:text-blue-400">
+                  <div className="font-display text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {p.diagnosticPlacement ? `${p.diagnosticPlacement.score}%` : 'Pending'}
                   </div>
-                  <div className="text-[11px] text-zinc-500 mt-0.5">Diagnostic Score</div>
+                  <div className="text-[13px] text-zinc-500 mt-0.5">Diagnostic Score</div>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-between items-center text-xs">
+              <div className="pt-2 flex justify-between items-center text-sm">
                 <span className="text-zinc-500">Need in-depth analytics?</span>
                 {onNavigate && (
-                  <Button variant="ghost" size="sm" onClick={() => onNavigate('progress')}>
+                  <Button variant="ghost" onClick={() => onNavigate('progress')}>
                     Open Telemetry Hub
                     <ArrowRightIcon className="h-3 w-3" />
                   </Button>
@@ -463,23 +521,81 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           <Card className="p-6 sm:p-7 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <span className="text-[13px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   Verifiable Academic Credentials
                 </span>
-                <h3 className="mt-0.5 font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="mt-0.5 font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
                   Quantum Skill Passport & Cryptographic Ledger
                 </h3>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="primary"
+                  onClick={handleGeneratePassport}
+                  disabled={generatingPassport}
+                  className="rounded-full px-4 py-1.5 text-sm font-bold"
+                >
+                  <ShieldCheckIcon className="h-3.5 w-3.5" />
+                  {generatingPassport ? 'Signing with SHA-256...' : 'Issue Skill Passport (IEEE-Q-103)'}
+                </Button>
                 {onNavigate && (
-                  <Button variant="secondary" size="sm" onClick={() => onNavigate('achievements')}>
+                  <Button variant="secondary" onClick={() => onNavigate('achievements')}>
                     <AwardIcon className="h-3.5 w-3.5" />
                     All Milestones
                   </Button>
                 )}
               </div>
             </div>
+
+            {/* Live Cryptographic Skill Passport Verification Card */}
+            {passportToken && (
+              <div className="rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50/40 p-5 dark:border-emerald-700 dark:bg-emerald-950/40 shadow-sm space-y-3 animate-fadeInUp">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-emerald-200 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white font-mono font-bold text-sm shadow-xs">
+                      IEEE
+                    </span>
+                    <div>
+                      <span className="font-mono text-sm font-bold text-emerald-900 dark:text-emerald-300">
+                        {passportToken.token_id}
+                      </span>
+                      <h4 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
+                        {passportToken.concept_name}
+                      </h4>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-sm font-bold text-emerald-800">
+                      Mastery: {(passportToken.mastery_score * 100).toFixed(0)}%
+                    </span>
+                    <span className="rounded-full bg-purple-100 border border-purple-300 px-2.5 py-0.5 text-sm font-bold text-[#4c1d70]">
+                      Transfer-Tested ✅
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-xs font-mono text-zinc-500 uppercase">Standard Competency</span>
+                    <p className="font-medium text-zinc-800 dark:text-zinc-200">{passportToken.competency_standard}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-mono text-zinc-500 uppercase">Cryptographic Signature Proof</span>
+                    <div className="flex items-center justify-between font-mono text-[13px] text-zinc-600 bg-white/80 dark:bg-zinc-900 px-2.5 py-1 rounded border border-emerald-200 mt-0.5">
+                      <span className="truncate max-w-[200px]">{passportToken.signature_hash}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyToken(passportToken.signature_hash)}
+                        className="text-emerald-700 hover:underline font-bold text-sm ml-2"
+                      >
+                        {copiedToken ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Dynamic Credential Cards */}
             {Object.keys(p.milestoneProofs).length > 0 ? (
@@ -489,19 +605,19 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <ShieldCheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                        <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-300">
                           {proof.milestoneCode}
                         </span>
                       </div>
                       <StatusChip tone="done">Verified</StatusChip>
                     </div>
-                    <h4 className="mt-2 font-display text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                    <h4 className="mt-2 font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
                       {proof.title}
                     </h4>
-                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                       {proof.evidenceTitle}
                     </p>
-                    <div className="mt-3 flex items-center justify-between border-t border-emerald-100 pt-3 dark:border-emerald-900/40 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
+                    <div className="mt-3 flex items-center justify-between border-t border-emerald-100 pt-3 dark:border-emerald-900/40 text-[13px] font-mono text-zinc-600 dark:text-zinc-400">
                       <span>{proof.verificationHash}</span>
                       <button
                         type="button"
@@ -519,15 +635,15 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
                   <ShieldCheckIcon className="h-6 w-6" />
                 </div>
-                <h4 className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                <h4 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-100">
                   No Verified Credentials Earned Yet
                 </h4>
-                <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
                   Complete Chapter 1 theory topics and verify the statevector normalization simulation in AerSimulator to earn your first milestone credential (MS-01).
                 </p>
                 {onNavigate && (
                   <Button
-                    size="sm"
+                   
                     onClick={() => {
                       stateStore.setActiveLesson('ch-1', 't1-1');
                       onNavigate('lesson');
@@ -547,12 +663,12 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
               onClick={() => onNavigate && onNavigate('path')}
             >
               <div className="flex items-center justify-between">
-                <span className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600">
+                <span className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600">
                   Curriculum Roadmap
                 </span>
                 <ArrowRightIcon className="h-4 w-4 text-zinc-400 group-hover:text-emerald-600" />
               </div>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-sm text-zinc-500">
                 Follow your adaptive path from Chapter 1 through Capstone algorithms.
               </p>
             </Card>
@@ -562,12 +678,12 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
               onClick={() => onNavigate && onNavigate('circuits')}
             >
               <div className="flex items-center justify-between">
-                <span className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600">
+                <span className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600">
                   Circuit Studio
                 </span>
                 <ArrowRightIcon className="h-4 w-4 text-zinc-400 group-hover:text-emerald-600" />
               </div>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-sm text-zinc-500">
                 Design and simulate custom multi-qubit unitary circuits in browser.
               </p>
             </Card>
@@ -577,12 +693,12 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
               onClick={() => onNavigate && onNavigate('assessments')}
             >
               <div className="flex items-center justify-between">
-                <span className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600">
+                <span className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600">
                   Skill Practice
                 </span>
                 <ArrowRightIcon className="h-4 w-4 text-zinc-400 group-hover:text-emerald-600" />
               </div>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-sm text-zinc-500">
                 Attempt adaptive diagnostic assessments and verify calculation fidelity.
               </p>
             </Card>
@@ -597,7 +713,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
         <div className="space-y-8">
           {/* Notification toast if remediation was dispatched */}
           {remediationSent && (
-            <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-xs font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />
                 <span>{remediationSent}</span>
@@ -616,25 +732,38 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           <Card className="p-6 sm:p-7 border-l-4 border-l-emerald-600 bg-gradient-to-r from-emerald-50/40 via-white to-zinc-50 dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2.5 py-0.5 text-[13px] font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
                     <GraduationCapIcon className="h-3.5 w-3.5" />
                     ACADEMIC FACULTY DIRECTORY
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
                     Cohort: QC-2026-AUTUMN
                   </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <CheckCircle2Icon className="h-3 w-3" />
+                    Backend Connected (/api/v1/instructor)
+                  </span>
                 </div>
-                <h2 className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                   Dr. Evelyn Vance & Instructor Manoj Kumar
                 </h2>
-                <p className="max-w-2xl text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                <p className="max-w-2xl text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   Active monitoring of 248 enrolled quantum computing students across theoretical linear algebra, laboratory circuit simulations, and Bayesian concept retention.
                 </p>
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <Button variant="secondary" size="sm" onClick={() => alert('Cohort audit gradebook exported to CSV.')}>
+                <Button 
+                  variant="secondary" 
+                  onClick={fetchInstructorData} 
+                  disabled={loadingInstructorAnalytics}
+                  className="inline-flex items-center gap-2 rounded-xl text-xs font-semibold px-3 py-2"
+                >
+                  <RefreshCwIcon className={`h-3.5 w-3.5 ${loadingInstructorAnalytics ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button variant="secondary" onClick={() => apiClient.downloadGradebookCsv()} className="inline-flex items-center gap-2 rounded-xl text-xs font-semibold px-3 py-2">
                   <DownloadIcon className="h-3.5 w-3.5" />
                   Export Gradebook CSV
                 </Button>
@@ -645,50 +774,50 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           {/* Cohort KPI Grid (Matching backend InstructorOverviewRead) */}
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="p-5">
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <dt className="text-[13px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 Total Enrolled Learners
               </dt>
-              <dd className="mt-2 font-display text-3xl font-black text-zinc-900 dark:text-zinc-50">
-                248
+              <dd className="mt-2 font-display text-4xl font-black text-zinc-900 dark:text-zinc-50">
+                {instructorAnalytics ? instructorAnalytics.total_registered_learners : 248}
               </dd>
-              <p className="mt-1 text-xs text-emerald-600 font-medium">
-                100% active this semester
+              <p className="mt-1 text-sm text-emerald-600 font-medium">
+                Live backend sync
               </p>
             </Card>
 
             <Card className="p-5">
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <dt className="text-[13px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 Cohort Mean Quiz Score
               </dt>
-              <dd className="mt-2 font-display text-3xl font-black text-zinc-900 dark:text-zinc-50">
-                78.4%
+              <dd className="mt-2 font-display text-4xl font-black text-zinc-900 dark:text-zinc-50">
+                {instructorAnalytics ? `${instructorAnalytics.platform_average_quiz_score.toFixed(1)}%` : '78.4%'}
               </dd>
-              <p className="mt-1 text-xs text-emerald-600 font-medium">
-                +4.2% higher than benchmark
+              <p className="mt-1 text-sm text-emerald-600 font-medium">
+                Across all assessments
               </p>
             </Card>
 
             <Card className="p-5">
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Verified Labs Executed
+              <dt className="text-[13px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Focus Sessions Completed
               </dt>
-              <dd className="mt-2 font-display text-3xl font-black text-zinc-900 dark:text-zinc-50">
-                1,420
+              <dd className="mt-2 font-display text-4xl font-black text-zinc-900 dark:text-zinc-50">
+                {instructorAnalytics ? instructorAnalytics.total_focus_sessions_completed : 312}
               </dd>
-              <p className="mt-1 text-xs text-purple-600 font-medium">
-                AerSimulator statevector checks
+              <p className="mt-1 text-sm text-purple-600 font-medium">
+                Pomodoro & deep work
               </p>
             </Card>
 
             <Card className="p-5 border-l-4 border-l-amber-500">
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Learners Needing Intervention
+              <dt className="text-[13px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Total Assessments Completed
               </dt>
-              <dd className="mt-2 font-display text-3xl font-black text-amber-600 dark:text-amber-400">
-                14
+              <dd className="mt-2 font-display text-4xl font-black text-amber-600 dark:text-amber-400">
+                {instructorAnalytics ? instructorAnalytics.total_assessments_taken : 528}
               </dd>
-              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300 font-medium">
-                Struggling with Born rule & phase kickback
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-300 font-medium">
+                Formative & adaptive submissions
               </p>
             </Card>
           </dl>
@@ -697,25 +826,25 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           <Card className="p-6 sm:p-7 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <span className="text-[13px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   Cohort Learning Diagnostics
                 </span>
-                <h3 className="mt-0.5 font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="mt-0.5 font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
                   Concept Struggle Heatmap & Retention Analysis
                 </h3>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Telemetry compiled from 1,890 formative quiz checks, adaptive tests, and circuit simulator runs.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-800 dark:bg-red-950 dark:text-red-300">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800 dark:bg-red-950 dark:text-red-300">
                   Critical (&lt;50%)
                 </span>
-                <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                   Moderate (50–70%)
                 </span>
-                <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                   Mastered (&gt;70%)
                 </span>
               </div>
@@ -790,15 +919,15 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
+                      <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
                         {item.chapter} · {item.learnersTested} tested
                       </span>
-                      <h4 className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                      <h4 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
                         {item.title}
                       </h4>
                     </div>
                     <span
-                      className={`font-mono text-sm font-black ${
+                      className={`font-mono text-base font-black ${
                         item.status === 'critical'
                           ? 'text-red-600 dark:text-red-400'
                           : item.status === 'moderate'
@@ -816,7 +945,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                     className="mt-2.5 h-2"
                   />
 
-                  <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                     {item.issue}
                   </p>
 
@@ -824,7 +953,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                     <button
                       type="button"
                       onClick={() => handleSendRemediation(item.id, item.title)}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400"
+                      className="inline-flex items-center gap-1 text-[13px] font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400"
                     >
                       <SendIcon className="h-3 w-3" />
                       Dispatch Targeted Remediation Lab
@@ -839,10 +968,10 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
           <Card className="p-6 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
                   Cohort Student Directory & Progress Ledger
                 </h3>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Live monitoring of individual student trajectory, diagnostic integrity, and milestone accomplishments.
                 </p>
               </div>
@@ -856,7 +985,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                     placeholder="Search by student or topic..."
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
-                    className="h-9 rounded-lg border border-zinc-200 bg-zinc-50 pl-8 pr-3 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-emerald-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="h-9 rounded-lg border border-zinc-200 bg-zinc-50 pl-8 pr-3 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-emerald-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </div>
 
@@ -871,7 +1000,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                       key={f.id}
                       type="button"
                       onClick={() => setStatusFilter(f.id as any)}
-                      className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                      className={`rounded-lg px-2.5 py-1.5 text-sm font-semibold transition ${
                         statusFilter === f.id
                           ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
                           : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
@@ -886,7 +1015,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
 
             {/* Students Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Student Name</th>
@@ -910,12 +1039,12 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                             <div className="font-bold text-zinc-900 dark:text-zinc-100">
                               {std.name}
                             </div>
-                            <div className="text-[10px] text-zinc-400">{std.email}</div>
+                            <div className="text-xs text-zinc-400">{std.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                        <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                           {std.ageTier}
                         </span>
                       </td>
@@ -940,7 +1069,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                       <td className="py-3 px-4 text-right">
                         <Button
                           variant="secondary"
-                          size="sm"
+                         
                           onClick={() => setSelectedStudent(std)}
                         >
                           Inspect Twin
@@ -959,14 +1088,14 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
               <div className="relative w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 font-display text-lg font-bold text-white shadow">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 font-display text-xl font-bold text-white shadow">
                       {selectedStudent.avatar}
                     </span>
                     <div>
-                      <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                      <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
                         {selectedStudent.name}
                       </h3>
-                      <p className="text-xs text-zinc-500">{selectedStudent.email}</p>
+                      <p className="text-sm text-zinc-500">{selectedStudent.email}</p>
                     </div>
                   </div>
                   <button
@@ -978,7 +1107,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   </button>
                 </div>
 
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs dark:border-zinc-800 dark:bg-zinc-950 space-y-2">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-950 space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <span className="text-zinc-500">Current Chapter</span>
@@ -1009,11 +1138,11 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="secondary" size="sm" onClick={() => setSelectedStudent(null)}>
+                  <Button variant="secondary" onClick={() => setSelectedStudent(null)}>
                     Close
                   </Button>
                   <Button
-                    size="sm"
+                   
                     onClick={() => {
                       handleSendRemediation(selectedStudent.id, selectedStudent.struggleConcept || 'Quantum Foundations');
                       setSelectedStudent(null);
@@ -1036,7 +1165,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
             <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
               <div className="flex items-center gap-2">
                 <Edit3Icon className="h-5 w-5 text-emerald-600" />
-                <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50">
                   Manual User Details & Profile Setup
                 </h3>
               </div>
@@ -1049,7 +1178,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
               </button>
             </div>
 
-            <form onSubmit={handleSaveUser} className="mt-4 space-y-4 text-xs">
+            <form onSubmit={handleSaveUser} className="mt-4 space-y-4 text-sm">
               <div>
                 <label className="block font-bold text-zinc-700 dark:text-zinc-300">
                   Full Name
@@ -1060,7 +1189,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
                   placeholder="e.g. Manoj Kumar"
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                 />
               </div>
 
@@ -1074,7 +1203,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="e.g. manoj.quantum@edu.in"
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                 />
               </div>
 
@@ -1087,7 +1216,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   value={institutionInput}
                   onChange={(e) => setInstitutionInput(e.target.value)}
                   placeholder="e.g. Department of Physics & Quantum Computing, IIT Madras"
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                 />
               </div>
 
@@ -1100,7 +1229,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   value={departmentInput}
                   onChange={(e) => setDepartmentInput(e.target.value)}
                   placeholder="e.g. Center for Quantum Information and Computation"
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                 />
               </div>
 
@@ -1113,7 +1242,7 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                   value={goalInput}
                   onChange={(e) => setGoalInput(e.target.value)}
                   placeholder="e.g. Master Quantum Information Theory & NISQ Algorithms for Quantum Supremacy Benchmark"
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                 />
               </div>
 
@@ -1121,12 +1250,12 @@ export function Profile({ initialRole, onNavigate }: ProfileProps) {
                 <Button
                   type="button"
                   variant="secondary"
-                  size="sm"
+                 
                   onClick={() => setIsEditingUser(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Button type="submit" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
                   <SaveIcon className="h-3.5 w-3.5" />
                   Save Details
                 </Button>

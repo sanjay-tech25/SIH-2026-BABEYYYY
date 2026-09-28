@@ -18,7 +18,7 @@ export class ConceptualQuantumCodeEngine {
   /**
    * Converts a list of gate strings (e.g. ['H', 'S', 'S', 'H', 'CX']) into readable pseudocode.
    */
-  public static gatesToScript(circuitGates: string[], numQubits = 2): string {
+  public static gatesToScript(circuitGates: string[], numQubits: number = 2): string {
     const lines: string[] = [
       `// --- Educational Quantum Script ---`,
       `CREATE CIRCUIT ${numQubits} QUBITS`,
@@ -167,7 +167,7 @@ export class ConceptualQuantumCodeEngine {
     };
   }
 
-  private static extractQubit(line: string, defaultQ = 0): number {
+  private static extractQubit(line: string, defaultQ: number = 0): number {
     const match = line.match(/(?:QUBIT|WIRE|Q\[)\s*(\d+)/i) || line.match(/\s+(\d+)$/);
     return match ? parseInt(match[1], 10) : defaultQ;
   }

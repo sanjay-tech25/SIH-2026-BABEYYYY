@@ -1,743 +1,677 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { weeklyMinutes, activity, skills, learner, courses } from '../data/appData';
 import {
   TrendingUpIcon,
-  ClockIcon,
-  FlaskConicalIcon,
-  CheckCircle2Icon,
-  TargetIcon,
-  CalendarIcon,
-  AwardIcon,
-  ArrowRightIcon,
   FlameIcon,
-  LayersIcon,
+  AwardIcon,
+  BrainIcon,
+  TargetIcon,
   CompassIcon,
-  BarChart3Icon,
-  ShieldCheckIcon,
-  AlertCircleIcon,
-  SparklesIcon
+  SparklesIcon,
+  CheckCircle2Icon,
+  ClockIcon,
+  BarChart3Icon
 } from 'lucide-react';
-import { Card } from '../components/ui/Card';
-import { ProgressBar } from '../components/ui/ProgressBar';
-import { PageHeader } from '../components/ui/PageHeader';
-import { Button } from '../components/ui/Button';
-import { StatusChip } from '../components/ui/StatusChip';
-import { CURRICULUM } from '../data/curriculumData';
-import { stateStore, type AppState } from '../services/stateStore';
-import type { ViewId } from '../data/appData';
 
-const TABS = [
-  { id: 'overview', label: 'Executive Trajectory' },
-  { id: 'heatmap', label: 'Activity & Habit Heatmap' },
-  { id: 'competency', label: 'Quantum Competency Matrix' },
-  { id: 'curriculum', label: '11-Chapter Progress' },
-  { id: 'diagnostics', label: 'Assessment History' }
+const tabs = [
+  { id: 'time', label: 'Study Velocity' },
+  { id: 'consistency', label: 'Consistency Matrix' },
+  { id: 'mastery', label: 'Skill Breakdown' }
 ] as const;
 
-type TabId = (typeof TABS)[number]['id'];
+type TabId = (typeof tabs)[number]['id'];
 
-interface ProgressProps {
-  onNavigate?: (id: ViewId) => void;
-}
+const intensityClass = [
+  'bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30',
+  'bg-purple-200 dark:bg-purple-800/40 border-purple-300 dark:border-purple-700/50',
+  'bg-[#8942b0] dark:bg-[#7832a0] border-purple-400 text-white',
+  'bg-[#4c1d70] dark:bg-[#5c2188] border-[#f5d626]/60 text-[#f5d626] shadow-[0_0_8px_rgba(245,214,38,0.4)]'
+];
 
-export function Progress({ onNavigate }: ProgressProps) {
-  const [tab, setTab] = useState<TabId>('overview');
-  const [appState, setAppState] = useState<AppState>(stateStore.getState());
+// 5-axis Quantum Radar Chart Data
+const radarSkills = [
+  { name: 'Linear Algebra', value: 95, color: '#10b981', category: 'Math Foundations' },
+  { name: 'Bloch Sphere', value: 91, color: '#f5d626', category: 'Quantum State' },
+  { name: 'Neural Nets', value: 88, color: '#8b5cf6', category: 'Machine Learning' },
+  { name: 'Unitary Ops', value: 83, color: '#ec4899', category: 'Operators' },
+  { name: 'Circuit Design', value: 71, color: '#3b82f6', category: 'Synthesis' },
+  { name: 'Algorithms', value: 62, color: '#f97316', category: 'Complexity' },
+];
 
-  useEffect(() => {
-    return stateStore.subscribe(setAppState);
-  }, []);
+// Level Milestone Steps
+const levelMilestones = [
+  { level: 1, name: 'Ground State', xp: 1000, status: 'completed' },
+  { level: 2, name: 'Superposition', xp: 2000, status: 'completed' },
+  { level: 3, name: 'Entanglement', xp: 3000, status: 'completed' },
+  { level: 4, name: 'Quantum Explorer', xp: 4500, currentXp: 3450, status: 'current' },
+  { level: 5, name: 'Coherence Master', xp: 6000, status: 'locked' },
+  { level: 6, name: 'Algorithm Architect', xp: 8000, status: 'locked' }
+];
 
-  const p = appState.progress;
-  const totalTopics = CURRICULUM.reduce((acc, c) => acc + c.topics.length, 0);
-  const completedTopicsCount = p.completedLessons.length;
-  const completionPercentage = Math.round((completedTopicsCount / totalTopics) * 100);
+export function Progress() {
+  const [tab, setTab] = useState<TabId>('time');
+  const [hoveredRadarIndex, setHoveredRadarIndex] = useState<number | null>(null);
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
 
-  const accuracy = p.totalQuizAttempts > 0
-    ? Math.round((p.correctQuizAnswers / p.totalQuizAttempts) * 100)
-    : 0;
+  const peakMinutes = Math.max(...weeklyMinutes.map((d) => d.minutes));
 
-  const totalHours = (p.totalStudyMinutes / 60).toFixed(1);
+  // Radar chart mathematical geometry
+  const radarCenter = 140;
+  const radarRadius = 100;
+  const totalAxes = radarSkills.length;
 
-  // Executive Top Stats
-  const topStats = [
-    {
-      label: 'Curriculum Mastery',
-      value: `${completionPercentage}%`,
-      note: `${completedTopicsCount} of ${totalTopics} topics completed`,
-      icon: TargetIcon,
-      tone: 'emerald'
-    },
-    {
-      label: 'Active Study Time',
-      value: `${totalHours} hrs`,
-      note: `${p.totalStudyMinutes} verified active minutes`,
-      icon: ClockIcon,
-      tone: 'blue'
-    },
-    {
-      label: 'Practical Labs Run',
-      value: `${p.completedLabs.length}`,
-      note: 'Verified simulation executions',
-      icon: FlaskConicalIcon,
-      tone: 'purple'
-    },
-    {
-      label: 'Assessment Accuracy',
-      value: p.totalQuizAttempts > 0 ? `${accuracy}%` : '0%',
-      note: `${p.correctQuizAnswers} of ${p.totalQuizAttempts} correct checks`,
-      icon: CheckCircle2Icon,
-      tone: 'emerald'
-    },
-    {
-      label: 'Learning Streak',
-      value: `${p.streakDays} Days`,
-      note: p.streakDays > 0 ? `${p.streakDays} day habit established` : 'Begin session to start streak',
-      icon: FlameIcon,
-      tone: 'amber'
-    }
-  ];
+  const getCoordinates = (index: number, valueRatio: number) => {
+    const angle = (index * 2 * Math.PI) / totalAxes - Math.PI / 2;
+    const r = radarRadius * valueRatio;
+    return {
+      x: radarCenter + r * Math.cos(angle),
+      y: radarCenter + r * Math.sin(angle)
+    };
+  };
 
-  // Competency Domains with true dynamic zero-based evaluation
-  const competencyDomains = [
-    {
-      name: 'Mathematical Foundations & Hilbert Space',
-      score: Math.round((p.conceptMastery?.math_foundations ?? 0) * 100),
-      benchmark: 85,
-      status: (p.conceptMastery?.math_foundations ?? 0) >= 0.85 ? 'Mastered' : (p.conceptMastery?.math_foundations ?? 0) >= 0.5 ? 'Proficient' : (p.conceptMastery?.math_foundations ?? 0) > 0 ? 'Developing' : 'Not Started',
-      topicsCovered: 'Complex amplitudes, Dirac bra-ket, Born Rule probability, Inner product',
-      recommendation: (p.conceptMastery?.math_foundations ?? 0) > 0 ? 'Foundational mathematics in progress. Complete Topic 1.2 to finalize Hilbert space normalization.' : 'Begin Chapter 1, Topic 1.1 to calibrate your mathematical foundations.'
-    },
-    {
-      name: 'Single-Qubit Gates & Unitary Rotations',
-      score: Math.round((p.conceptMastery?.single_qubit_gates ?? 0) * 100),
-      benchmark: 75,
-      status: (p.conceptMastery?.single_qubit_gates ?? 0) >= 0.75 ? 'Mastered' : (p.conceptMastery?.single_qubit_gates ?? 0) >= 0.5 ? 'Proficient' : (p.conceptMastery?.single_qubit_gates ?? 0) > 0 ? 'Developing' : 'Not Started',
-      topicsCovered: 'Pauli X, Y, Z, Hadamard gate, Phase S/T rotations',
-      recommendation: (p.conceptMastery?.single_qubit_gates ?? 0) > 0 ? 'Single-qubit unitary operations developing. Work through phase rotation exercises.' : 'Prerequisites pending. Unlocks after Chapter 1 foundations.'
-    },
-    {
-      name: 'Multi-Qubit Systems & Entanglement',
-      score: Math.round((p.conceptMastery?.entanglement ?? 0) * 100),
-      benchmark: 75,
-      status: (p.conceptMastery?.entanglement ?? 0) >= 0.75 ? 'Mastered' : (p.conceptMastery?.entanglement ?? 0) >= 0.5 ? 'Proficient' : (p.conceptMastery?.entanglement ?? 0) > 0 ? 'Developing' : 'Not Started',
-      topicsCovered: 'Tensor product spaces, CNOT logic, Bell state |Φ⁺⟩ synthesis',
-      recommendation: (p.conceptMastery?.entanglement ?? 0) > 0 ? 'Execute Lab 3.1 in Circuit Studio to demonstrate EPR pair correlation.' : 'Scheduled for Chapter 3 multi-qubit systems.'
-    },
-    {
-      name: 'Quantum Algorithms & Phase Estimation',
-      score: Math.round((p.conceptMastery?.quantum_algorithms ?? 0) * 100),
-      benchmark: 70,
-      status: (p.conceptMastery?.quantum_algorithms ?? 0) >= 0.7 ? 'Mastered' : (p.conceptMastery?.quantum_algorithms ?? 0) >= 0.5 ? 'Proficient' : (p.conceptMastery?.quantum_algorithms ?? 0) > 0 ? 'Developing' : 'Not Started',
-      topicsCovered: 'Deutsch-Jozsa query complexity, Grover amplitude amplification',
-      recommendation: 'Prerequisites in progress. Will unlock after multi-qubit circuits.'
-    },
-    {
-      name: 'Circuit Studio & Hardware NISQ',
-      score: Math.round((p.conceptMastery?.bloch_sphere ?? 0) * 100),
-      benchmark: 70,
-      status: (p.conceptMastery?.bloch_sphere ?? 0) >= 0.7 ? 'Mastered' : (p.conceptMastery?.bloch_sphere ?? 0) >= 0.5 ? 'Proficient' : (p.conceptMastery?.bloch_sphere ?? 0) > 0 ? 'Developing' : 'Not Started',
-      topicsCovered: 'Interactive circuit compilation, statevector simulation, gate depth',
-      recommendation: 'Explore Circuit Studio to assemble custom multi-gate quantum circuits.'
-    },
-    {
-      name: 'Decoherence, Noise & Error Mitigation',
-      score: Math.round((p.conceptMastery?.noise_mitigation ?? 0) * 100),
-      benchmark: 70,
-      status: (p.conceptMastery?.noise_mitigation ?? 0) >= 0.7 ? 'Mastered' : (p.conceptMastery?.noise_mitigation ?? 0) >= 0.5 ? 'Proficient' : (p.conceptMastery?.noise_mitigation ?? 0) > 0 ? 'Developing' : 'Not Started',
-      topicsCovered: 'T₁ relaxation, T₂ dephasing, Zero-noise extrapolation',
-      recommendation: 'Scheduled for Chapter 5 physical hardware modules.'
-    }
-  ];
+  const radarPolygonPoints = radarSkills
+    .map((s, i) => {
+      const { x, y } = getCoordinates(i, s.value / 100);
+      return `${x},${y}`;
+    })
+    .join(' ');
+
+  // XP Progress calculation for current level (Level 4: 3000 -> 4500 XP = 1500 XP span, current = 3450 -> 450 XP into level = 30%)
+  const xpIntoCurrentLevel = learner.xp - 3000;
+  const xpRequiredForLevel = 4500 - 3000;
+  const levelProgressPct = Math.round((xpIntoCurrentLevel / xpRequiredForLevel) * 100);
+
+  // Overall course progress
+  const totalLessonsDone = courses.reduce((acc, c) => acc + c.lessonsDone, 0);
+  const totalLessons = courses.reduce((acc, c) => acc + c.lessonsTotal, 0);
+  const overallSyllabusPct = Math.round((totalLessonsDone / totalLessons) * 100);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Curriculum Progress & Learning Analytics"
-        subtitle="Continuous telemetry, concept retention tracking, laboratory experiment verification, and study velocity."
-      />
+    <div className="space-y-10 font-serif pb-12">
+      {/* 1. Open Editorial Header */}
+      <header className="border-b border-purple-200/70 dark:border-purple-900/40 pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm mb-2">
+          <span className="flex items-center gap-2 font-bold tracking-wide uppercase text-sm text-[#4c1d70] dark:text-[#f5d626]">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f5d626] animate-pulse shadow-[0_0_8px_#f5d626]" />
+            Cognitive Telemetry • Bayesian Knowledge Tracing
+          </span>
+          <span className="rounded-full bg-purple-100 dark:bg-purple-950/80 px-3 py-1 text-sm font-semibold text-[#4c1d70] dark:text-purple-200 border border-purple-300/60 dark:border-purple-800">
+            Current Tier: Level {learner.level} Explorer
+          </span>
+        </div>
+        <h1 className="text-4xl sm:text-[2.75rem] font-bold tracking-tight text-[#1a052e] dark:text-white">
+          Learning Mastery & Retention Progress
+        </h1>
+        <p className="mt-2 text-base text-slate-600 dark:text-zinc-400 max-w-3xl leading-relaxed">
+          Real-time analytics on conceptual recall, quantum gate intuition, circuit design velocity, and active simulation hours.
+        </p>
+      </header>
 
-      {/* Top 5 Metrics Row */}
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {topStats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label} className="p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    {stat.label}
-                  </dt>
-                  <span className="text-zinc-400 dark:text-zinc-500">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <dd className="mt-2 font-display text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
-                  {stat.value}
-                </dd>
-              </div>
-              <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                {stat.note}
+      {/* 2. Graphical Level & XP Pathway Progress Bar */}
+      <section aria-labelledby="level-pathway-heading" className="rounded-3xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-900/90 p-5 sm:p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#4c1d70] text-[#f5d626] shadow-md">
+              <AwardIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 id="level-pathway-heading" className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">
+                Quantum Explorer Pathway — Level {learner.level}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">
+                {learner.xp.toLocaleString()} total XP earned • {4500 - learner.xp} XP to unlock Level 5: Coherence Master
               </p>
-            </Card>
-          );
-        })}
-      </dl>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-[#4c1d70] dark:text-[#f5d626]">
+              {levelProgressPct}% of Level 4
+            </span>
+            <div className="w-32 sm:w-44 h-3 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden border border-purple-200/60 dark:border-purple-900/40">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#4c1d70] to-[#f5d626] transition-all duration-700 shadow-[0_0_8px_rgba(245,214,38,0.5)]"
+                style={{ width: `${levelProgressPct}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Tabs Bar */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800">
-        <div role="tablist" aria-label="Progress views" className="flex flex-wrap gap-2 -mb-px">
-          {TABS.map((t) => {
-            const active = t.id === tab;
+        {/* Milestone Steps Pipeline */}
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {levelMilestones.map((m) => {
+            const isDone = m.status === 'completed';
+            const isCurrent = m.status === 'current';
             return (
-              <button
-                key={t.id}
-                role="tab"
-                type="button"
-                aria-selected={active}
-                onClick={() => setTab(t.id)}
-                className={`border-b-2 px-4 py-3 text-xs font-bold transition-colors ${
-                  active
-                    ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400'
-                    : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+              <div
+                key={m.level}
+                className={`relative rounded-2xl p-3 border transition-all ${
+                  isCurrent
+                    ? 'border-[#f5d626] bg-amber-50/40 dark:bg-amber-950/20 shadow-[0_0_15px_rgba(245,214,38,0.15)] ring-1 ring-[#f5d626]/60'
+                    : isDone
+                    ? 'border-purple-200 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/10'
+                    : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 opacity-60'
                 }`}
               >
-                {t.label}
-              </button>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${isCurrent ? 'text-[#4c1d70] dark:text-[#f5d626]' : 'text-slate-500'}`}>
+                    Lvl {m.level}
+                  </span>
+                  {isDone && <CheckCircle2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+                  {isCurrent && <span className="h-2 w-2 rounded-full bg-[#f5d626] animate-ping" />}
+                </div>
+                <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                  {m.name}
+                </div>
+                <div className="mt-1 text-[13px] text-slate-500 dark:text-zinc-400">
+                  {m.xp} XP
+                </div>
+              </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Tab 1: Executive Trajectory */}
-      {tab === 'overview' && (
-        <div className="space-y-8">
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Pacing & Target Card */}
-            <Card className="p-6 lg:col-span-2 space-y-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    Learning Velocity & Pacing
-                  </span>
-                  <h3 className="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                    {completedTopicsCount === 0 ? 'Establish Your Velocity' : 'Target Completion: November 2026'}
-                  </h3>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                    {completedTopicsCount === 0
-                      ? 'Begin your first theory lesson or practical lab to calibrate your learning velocity and projected completion date.'
-                      : `At your current study rate of ~35 minutes per active day and ${p.streakDays}-day streak momentum.`}
-                  </p>
-                </div>
-                <StatusChip tone={completedTopicsCount === 0 ? 'locked' : 'active'}>
-                  {completedTopicsCount === 0 ? 'Ready to Start' : 'On Track'}
-                </StatusChip>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-zinc-700 dark:text-zinc-300">Curriculum Coverage</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    {completedTopicsCount} of {totalTopics} topics ({completionPercentage}%)
-                  </span>
-                </div>
-                <ProgressBar value={completionPercentage} label="Curriculum coverage" className="h-2.5" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
-                <div>
-                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400">Pacing Velocity</div>
-                  <div className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                    {completedTopicsCount === 0 ? '0.0 Topics/Wk' : '2.4 Topics/Wk'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400">Current Chapter</div>
-                  <div className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                    {p.completedChapters.length > 0 ? `Chapter ${p.completedChapters.length + 1}` : 'Chapter 1 (Starting)'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400">Competency Tier</div>
-                  <div className="font-display text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    Tier {p.currentLevel} ({p.totalXP} CP)
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Next Milestone in Sights */}
-            <Card className="p-6 flex flex-col justify-between border-l-4 border-l-emerald-600">
-              <div>
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400">
-                  <SparklesIcon className="h-4 w-4" />
-                  {completedTopicsCount === 0 ? 'First Milestone Target' : 'Next Milestone Target'}
-                </div>
-                <h4 className="mt-2 font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-                  {completedTopicsCount === 0
-                    ? 'MS-01: Complex Hilbert Space & State Vector Representation'
-                    : 'MS-02: Single-Qubit Unitary Transformations'}
-                </h4>
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  {completedTopicsCount === 0
-                    ? 'Complete Topic 1.1, Topic 1.2, and Lab 1.1 to verify statevector normalization and earn your first credential.'
-                    : 'Topic 2.1 complete. Finish Topic 2.2 and verify Lab 2.1 to earn verified credential.'}
-                </p>
-
-                <div className="mt-4 space-y-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                  <div className="flex items-center gap-2">
-                    {p.completedLessons.includes('t1-1') ? (
-                      <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <span className="h-3.5 w-3.5 rounded-full border border-zinc-400 shrink-0" />
-                    )}
-                    <span>Topic 1.1: Complex Numbers & Dirac Notation</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-500">
-                    {p.completedLessons.includes('t1-2') ? (
-                      <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <span className="h-3.5 w-3.5 rounded-full border border-zinc-400 shrink-0" />
-                    )}
-                    <span>Topic 1.2: Hilbert Space & Born Rule</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-500">
-                    {p.completedLabs.includes('lab-1-1') ? (
-                      <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <span className="h-3.5 w-3.5 rounded-full border border-zinc-400 shrink-0" />
-                    )}
-                    <span>Lab 1.1: State Vector Normalization</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                <Button
-                  className="w-full justify-center gap-1 text-xs"
-                  onClick={() => {
-                    stateStore.setActiveLesson('ch-1', 't1-1');
-                    onNavigate && onNavigate('lesson');
-                  }}
-                >
-                  {completedTopicsCount === 0 ? 'Begin Topic 1.1' : 'Resume Topic'}
-                  <ArrowRightIcon className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </Card>
-          </div>
-
-          {/* Verifiable Learning Sessions Log */}
+      {/* 3. High-Impact Graphical Visualizations (Radar Chart & Trajectory Curve) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Quantum Competency Radar / Spider Chart (7 cols) */}
+        <div className="lg:col-span-7 rounded-3xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-900/90 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
               <div>
-                <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-                  Verified Learning Telemetry & Sessions Log
-                </h3>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  Chronological record of verified study sessions, practical lab executions, and diagnostic checks.
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <BrainIcon className="h-5 w-5 text-[#4c1d70] dark:text-[#f5d626]" />
+                  Quantum Competency Radar
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+                  Multi-dimensional skill mastery evaluated across 6 core quantum domains.
                 </p>
               </div>
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                82% Mean Mastery
+              </span>
             </div>
 
-            <Card className="overflow-hidden">
-              {p.sessions && p.sessions.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="border-b border-zinc-200 bg-zinc-50/70 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/40">
-                      <tr>
-                        <th className="py-3 px-4 font-semibold">Date</th>
-                        <th className="py-3 px-4 font-semibold">Activity Module</th>
-                        <th className="py-3 px-4 font-semibold">Type</th>
-                        <th className="py-3 px-4 font-semibold">Duration</th>
-                        <th className="py-3 px-4 font-semibold">Points Earned</th>
-                        <th className="py-3 px-4 font-semibold">Accuracy / Verification</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-                      {p.sessions.map((sess) => (
-                        <tr key={sess.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-                          <td className="py-3 px-4 font-mono text-zinc-500">{sess.date}</td>
-                          <td className="py-3 px-4 font-medium text-zinc-900 dark:text-zinc-100">
-                            {sess.title}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span
-                              className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                                sess.category === 'theory'
-                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                                  : sess.category === 'lab'
-                                  ? 'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
-                                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+            {/* Radar Diagram Container */}
+            <div className="relative mt-4 flex flex-col sm:flex-row items-center justify-center gap-6">
+              <div className="relative w-[280px] h-[280px] shrink-0">
+                <svg viewBox="0 0 280 280" className="w-full h-full overflow-visible">
+                  <defs>
+                    <radialGradient id="radarFillGradient" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#f5d626" stopOpacity="0.4" />
+                      <stop offset="70%" stopColor="#4c1d70" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#3b1458" stopOpacity="0.1" />
+                    </radialGradient>
+                    <filter id="radarGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                  </defs>
+
+                  {/* Concentric Polygonal Background Grid (20%, 40%, 60%, 80%, 100%) */}
+                  {[0.2, 0.4, 0.6, 0.8, 1.0].map((level) => {
+                    const points = Array.from({ length: totalAxes })
+                      .map((_, i) => {
+                        const { x, y } = getCoordinates(i, level);
+                        return `${x},${y}`;
+                      })
+                      .join(' ');
+                    return (
+                      <polygon
+                        key={level}
+                        points={points}
+                        fill="none"
+                        stroke="currentColor"
+                        className="text-purple-200/80 dark:text-purple-900/50"
+                        strokeWidth="1"
+                        strokeDasharray={level === 1.0 ? 'none' : '3,3'}
+                      />
+                    );
+                  })}
+
+                  {/* Radial Axis Lines */}
+                  {Array.from({ length: totalAxes }).map((_, i) => {
+                    const outer = getCoordinates(i, 1.0);
+                    return (
+                      <line
+                        key={i}
+                        x1={radarCenter}
+                        y1={radarCenter}
+                        x2={outer.x}
+                        y2={outer.y}
+                        stroke="currentColor"
+                        className="text-purple-200/70 dark:text-purple-900/40"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
+
+                  {/* Shaded Skill Data Polygon */}
+                  <polygon
+                    points={radarPolygonPoints}
+                    fill="url(#radarFillGradient)"
+                    stroke="#f5d626"
+                    strokeWidth="2.5"
+                    filter="url(#radarGlow)"
+                    className="transition-all duration-500 hover:stroke-[#e2c317]"
+                  />
+
+                  {/* Data Vertex Nodes */}
+                  {radarSkills.map((skill, i) => {
+                    const { x, y } = getCoordinates(i, skill.value / 100);
+                    const isHovered = hoveredRadarIndex === i;
+                    return (
+                      <g key={skill.name} className="cursor-pointer" onMouseEnter={() => setHoveredRadarIndex(i)} onMouseLeave={() => setHoveredRadarIndex(null)}>
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r={isHovered ? 7 : 4.5}
+                          fill="#4c1d70"
+                          stroke="#f5d626"
+                          strokeWidth="2"
+                          className="transition-all duration-200 shadow-lg"
+                        />
+                        {/* Text Label on Axis Outer Edge */}
+                        {(() => {
+                          const labelPos = getCoordinates(i, 1.18);
+                          return (
+                            <text
+                              x={labelPos.x}
+                              y={labelPos.y}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className={`text-xs font-bold transition-all ${
+                                isHovered ? 'fill-[#4c1d70] dark:fill-[#f5d626] font-extrabold' : 'fill-slate-600 dark:fill-zinc-400'
                               }`}
                             >
-                              {sess.category}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">
-                            {sess.durationMinutes} min
-                          </td>
-                          <td className="py-3 px-4 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                            +{sess.xpEarned} CP
-                          </td>
-                          <td className="py-3 px-4">
-                            {sess.accuracy !== undefined ? (
-                              <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                                {sess.accuracy}% Correct
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-[11px]">
-                                <CheckCircle2Icon className="h-3.5 w-3.5" /> Verified
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-8 text-center space-y-3">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
-                    <ClockIcon className="h-6 w-6" />
-                  </div>
-                  <h4 className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                    No Learning Sessions Recorded Yet
-                  </h4>
-                  <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                    Every completed topic, practical simulation run, and diagnostic check is cryptographically recorded here in real-time.
-                  </p>
-                  {onNavigate && (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        stateStore.setActiveLesson('ch-1', 't1-1');
-                        onNavigate('lesson');
-                      }}
-                    >
-                      Begin Topic 1.1 Now
-                    </Button>
-                  )}
-                </div>
-              )}
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 2: Activity & Habit Heatmap */}
-      {tab === 'heatmap' && (
-        <div className="space-y-8">
-          <Card className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-                  28-Day Learning Activity Heatmap
-                </h3>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                  Visual representation of continuous learning engagement, study frequency, and session density.
-                </p>
+                              {skill.name}
+                            </text>
+                          );
+                        })()}
+                      </g>
+                    );
+                  })}
+                </svg>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                <span>Less</span>
-                <span className="h-3 w-3 rounded-sm bg-zinc-100 border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700" />
-                <span className="h-3 w-3 rounded-sm bg-emerald-200 dark:bg-emerald-950" />
-                <span className="h-3 w-3 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-                <span className="h-3 w-3 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
-                <span>More</span>
-              </div>
-            </div>
 
-            {/* 4-Week Activity Grid */}
-            <div className="mt-6 overflow-x-auto pb-2">
-              <div className="grid grid-cols-7 gap-2 min-w-[320px]">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                  <div key={day} className="text-center font-mono text-[10px] text-zinc-400 mb-1">
-                    {day}
+              {/* Radar Breakdown Key / Metrics */}
+              <div className="flex-1 w-full space-y-2 text-sm">
+                {radarSkills.map((skill, i) => (
+                  <div
+                    key={skill.name}
+                    onMouseEnter={() => setHoveredRadarIndex(i)}
+                    onMouseLeave={() => setHoveredRadarIndex(null)}
+                    className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                      hoveredRadarIndex === i
+                        ? 'border-[#f5d626] bg-amber-50/50 dark:bg-amber-950/20 shadow-sm'
+                        : 'border-slate-100 dark:border-zinc-800 hover:bg-purple-50/40 dark:hover:bg-zinc-800/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: skill.color }} />
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-200">{skill.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-[#4c1d70] dark:bg-[#f5d626]" style={{ width: `${skill.value}%` }} />
+                      </div>
+                      <span className="font-bold text-[#4c1d70] dark:text-[#f5d626] w-8 text-right">
+                        {skill.value}%
+                      </span>
+                    </div>
                   </div>
                 ))}
-                {(p.dailyActivity || []).map((item, idx) => {
-                  const colors = [
-                    'bg-zinc-100 border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700/60',
-                    'bg-emerald-200 border border-emerald-300 dark:bg-emerald-950 dark:border-emerald-800',
-                    'bg-emerald-400 border border-emerald-500 dark:bg-emerald-700 dark:border-emerald-600',
-                    'bg-emerald-600 border border-emerald-700 dark:bg-emerald-500 dark:border-emerald-400'
-                  ];
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: BKT Retention Curve & Curriculum Rings (5 cols) */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* BKT Retention Trajectory Spline Chart */}
+          <div className="rounded-3xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-900/90 p-5 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
+              <div>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <TrendingUpIcon className="h-5 w-5 text-[#4c1d70] dark:text-[#f5d626]" />
+                  BKT Retention Curve
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">
+                  Bayesian Knowledge Tracing recall vs forgetting curve.
+                </p>
+              </div>
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                +24% Recall
+              </span>
+            </div>
+
+            {/* SVG Spline Area Chart */}
+            <div className="mt-4">
+              <div className="h-44 w-full">
+                <svg viewBox="0 0 400 160" className="w-full h-full overflow-visible">
+                  <defs>
+                    <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#f5d626" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#4c1d70" stopOpacity="0.05" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Grid Lines */}
+                  {[30, 70, 110, 150].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="currentColor" className="text-slate-100 dark:text-zinc-800" strokeWidth="1" strokeDasharray="3,3" />
+                  ))}
+
+                  {/* Forgetting Baseline Curve (without spaced practice - dashed red/slate) */}
+                  <path
+                    d="M 10 90 Q 120 130, 220 145 T 390 152"
+                    fill="none"
+                    stroke="#94a3b8"
+                    strokeWidth="1.5"
+                    strokeDasharray="4,4"
+                  />
+                  <text x="320" y="142" className="text-[11px] fill-slate-400 dark:fill-zinc-500">Unreviewed decay</text>
+
+                  {/* Active Knowledge Mastery Trajectory (Smooth Spline) */}
+                  <path
+                    d="M 10 135 C 70 120, 110 85, 170 70 C 230 55, 300 35, 390 20 L 390 160 L 10 160 Z"
+                    fill="url(#curveGradient)"
+                  />
+                  <path
+                    d="M 10 135 C 70 120, 110 85, 170 70 C 230 55, 300 35, 390 20"
+                    fill="none"
+                    stroke="#4c1d70"
+                    strokeWidth="3"
+                    className="dark:stroke-[#f5d626]"
+                  />
+
+                  {/* Trajectory Milestone Dots */}
+                  {[
+                    { cx: 10, cy: 135, label: 'W1' },
+                    { cx: 110, cy: 92, label: 'W2' },
+                    { cx: 210, cy: 60, label: 'W3' },
+                    { cx: 310, cy: 38, label: 'W4' },
+                    { cx: 390, cy: 20, label: 'Current' }
+                  ].map((pt, idx) => (
+                    <g key={idx}>
+                      <circle cx={pt.cx} cy={pt.cy} r="4.5" fill="#4c1d70" stroke="#f5d626" strokeWidth="2" />
+                      <text x={pt.cx} y={pt.cy - 10} textAnchor="middle" className="text-[11px] font-bold fill-zinc-700 dark:fill-zinc-300">
+                        {pt.label}
+                      </text>
+                    </g>
+                  ))}
+                </svg>
+              </div>
+              <div className="flex items-center justify-between pt-2 text-[13px] text-slate-500 dark:text-zinc-400 border-t border-slate-100 dark:border-zinc-800">
+                <span>Week 1 (Diagnostic: 35%)</span>
+                <span>Week 2 (58%)</span>
+                <span>Week 3 (76%)</span>
+                <span className="font-bold text-[#4c1d70] dark:text-[#f5d626]">Today (91% Peak)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Curriculum Completion Progress Ring (Donut) */}
+          <div className="rounded-3xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-900/90 p-5 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
+              <div>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <TargetIcon className="h-5 w-5 text-[#4c1d70] dark:text-[#f5d626]" />
+                  Curriculum Completion
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">
+                  {totalLessonsDone} of {totalLessons} total lessons cleared
+                </p>
+              </div>
+              <span className="text-sm font-bold text-[#4c1d70] dark:text-[#f5d626]">
+                {overallSyllabusPct}% Done
+              </span>
+            </div>
+
+            <div className="mt-4 flex items-center gap-6">
+              {/* Circular Progress Ring */}
+              <div className="relative h-28 w-28 shrink-0 flex items-center justify-center">
+                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-100 dark:text-zinc-800"
+                    strokeWidth="10"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="#4c1d70"
+                    strokeWidth="10"
+                    strokeDasharray={251.3}
+                    strokeDashoffset={251.3 * (1 - overallSyllabusPct / 100)}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 dark:stroke-[#f5d626]"
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-bold text-zinc-900 dark:text-white leading-none">
+                    {overallSyllabusPct}%
+                  </span>
+                  <span className="text-[11px] text-slate-400 uppercase mt-0.5">Syllabus</span>
+                </div>
+              </div>
+
+              {/* Course Breakdown Badges */}
+              <div className="flex-1 space-y-2 text-sm">
+                {courses.slice(0, 3).map((c) => {
+                  const pct = Math.round((c.lessonsDone / c.lessonsTotal) * 100);
                   return (
-                    <div
-                      key={item.date || idx}
-                      title={`${item.date}: ${item.minutes} min active study`}
-                      className={`h-10 rounded-md p-1.5 flex flex-col justify-between transition hover:scale-105 ${
-                        colors[item.level]
-                      }`}
-                    >
-                      <span className="text-[9px] font-mono text-zinc-700 dark:text-zinc-300">
-                        {item.date ? item.date.split('-').slice(1).join('/') : ''}
-                      </span>
-                      {item.minutes > 0 && (
-                        <span className="text-[9px] font-bold text-zinc-900 dark:text-zinc-100 text-right">
-                          {item.minutes}m
-                        </span>
-                      )}
+                    <div key={c.id} className="space-y-1">
+                      <div className="flex justify-between text-[13px]">
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">{c.title}</span>
+                        <span className="font-bold text-[#4c1d70] dark:text-[#f5d626]">{pct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-[#4c1d70] to-[#f5d626]"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-950">
-                <span className="text-xs text-zinc-500">Longest Consistent Streak</span>
-                <div className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
-                  7 Active Days
-                </div>
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-950">
-                <span className="text-xs text-zinc-500">Current Unbroken Streak</span>
-                <div className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                  {p.streakDays} Consecutive Days
-                </div>
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-950">
-                <span className="text-xs text-zinc-500">Avg. Active Session</span>
-                <div className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
-                  32 Minutes
-                </div>
-              </div>
-            </div>
-          </Card>
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* Tab 3: Quantum Competency Matrix */}
-      {tab === 'competency' && (
-        <div className="space-y-6">
+      {/* 4. Interactive Velocity & Activity Deep-Dive Tabs */}
+      <section aria-labelledby="analytics-tabs-heading" className="rounded-3xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-900/90 p-5 sm:p-6 shadow-sm space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-zinc-800">
           <div>
-            <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-              Quantum Knowledge & Competency Matrix
-            </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-              Continuous Bayesian skill evaluation across all 6 fundamental dimensions of quantum computing.
+            <h2 id="analytics-tabs-heading" className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <BarChart3Icon className="h-5 w-5 text-[#4c1d70] dark:text-[#f5d626]" />
+              Study Analytics & Practice Trends
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400">
+              Switch between velocity histograms, calendar activity heatmaps, and granular skill metrics.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {competencyDomains.map((dom) => (
-              <Card key={dom.name} className="p-5 flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <h4 className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                      {dom.name}
-                    </h4>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        dom.status === 'Mastered'
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : dom.status === 'Proficient'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                          : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-                      }`}
-                    >
-                      {dom.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 space-y-1.5">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-zinc-500">Assessed Competence</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                        {dom.score}% / Benchmark {dom.benchmark}%
-                      </span>
-                    </div>
-                    <ProgressBar value={dom.score} label={`${dom.name} mastery`} className="h-2" />
-                  </div>
-
-                  <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-                    <span className="font-semibold text-zinc-700 dark:text-zinc-300">Concepts: </span>
-                    {dom.topicsCovered}
-                  </p>
-                </div>
-
-                <div className="rounded-lg bg-zinc-50 p-2.5 text-[11px] text-zinc-600 border border-zinc-100 dark:bg-zinc-950 dark:text-zinc-400 dark:border-zinc-800">
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200">AI Recommendation: </span>
-                  {dom.recommendation}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 4: 11-Chapter Progress */}
-      {tab === 'curriculum' && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-              11-Chapter End-to-End Curriculum Roadmap
-            </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-              Live status across all 11 domains of the Quantum Knowledge Base.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {CURRICULUM.map((ch) => {
-              const chNum = ch.id.replace('ch-', '');
-              const prefix = `t${chNum}-`;
-              const completedInCh = p.completedLessons.filter((l) => l.startsWith(prefix)).length;
-              const totalInCh = ch.topics.length;
-              const isFinished = completedInCh === totalInCh;
-              const isInProgress = completedInCh > 0 && !isFinished;
-
+          {/* Tab Switcher Pills */}
+          <div role="tablist" className="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 p-1 rounded-full">
+            {tabs.map((t) => {
+              const active = t.id === tab;
               return (
-                <Card
-                  key={ch.id}
-                  className={`p-5 transition border ${
-                    isFinished
-                      ? 'border-emerald-200 dark:border-emerald-900/50'
-                      : isInProgress
-                      ? 'border-blue-200 dark:border-blue-900/50'
-                      : 'border-zinc-200 dark:border-zinc-800 opacity-80'
+                <button
+                  key={t.id}
+                  role="tab"
+                  type="button"
+                  aria-selected={active}
+                  onClick={() => setTab(t.id)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-bold transition-all active:scale-95 ${
+                    active
+                      ? 'bg-[#4c1d70] text-white shadow-sm'
+                      : 'text-slate-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                          Domain {ch.vault_domain}
-                        </span>
-                        {isFinished ? (
-                          <StatusChip tone="done">Chapter Completed</StatusChip>
-                        ) : isInProgress ? (
-                          <StatusChip tone="active">In Progress</StatusChip>
-                        ) : (
-                          <StatusChip tone="locked">Upcoming</StatusChip>
-                        )}
-                      </div>
-                      <h4 className="mt-1 font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-                        {ch.title}
-                      </h4>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                        {ch.subtitle}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className="text-right">
-                        <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                          {completedInCh} / {totalInCh} Topics
-                        </div>
-                        <div className="text-[11px] text-zinc-500">
-                          {Math.round((completedInCh / totalInCh) * 100)}% Done
-                        </div>
-                      </div>
-
-                      {isInProgress && onNavigate && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            stateStore.setActiveLesson(ch.id, `t${chNum}-2`);
-                            onNavigate('lesson');
-                          }}
-                        >
-                          Continue
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
+                  {t.label}
+                </button>
               );
             })}
           </div>
         </div>
-      )}
 
-      {/* Tab 5: Assessment & Diagnostic History */}
-      {tab === 'diagnostics' && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-              Diagnostic Placement & Assessment Registry
-            </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-              Continuous adaptive testing history with anti-tamper telemetry and concept retention metrics.
-            </p>
-          </div>
-
-          {p.diagnosticPlacement && (
-            <Card className="p-6 border-l-4 border-l-emerald-600 bg-emerald-50/20 dark:bg-emerald-950/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                    Latest Adaptive Placement Benchmark
-                  </span>
-                  <h4 className="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                    Placed into Level {p.diagnosticPlacement.placedLevel} — Proficient Foundations
-                  </h4>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                    Verified on {p.diagnosticPlacement.timestamp} with proctoring integrity 98%.
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="font-display text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                    {p.diagnosticPlacement.score}%
-                  </span>
-                  <div className="text-[10px] uppercase font-semibold text-zinc-500">Placement Score</div>
-                </div>
+        {/* Tab 1: Enhanced Weekly Velocity Histogram with Dual Accuracy Overlay */}
+        {tab === 'time' && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                  Daily Study Minutes & Accuracy Trend
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">
+                  Peak performance recorded on Thursday (82m, 94% quiz score).
+                </p>
               </div>
-            </Card>
-          )}
+              <div className="flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
+                  <span className="h-3 w-3 rounded bg-[#4c1d70]" />
+                  Study Minutes
+                </span>
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
+                  <span className="h-2 w-2 rounded-full bg-[#f5d626]" />
+                  Quiz Accuracy %
+                </span>
+              </div>
+            </div>
 
-          <div className="space-y-3">
-            {(p.pastAssessmentAttempts || []).map((attempt) => (
-              <Card key={attempt.id} className="p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-zinc-500">{attempt.date}</span>
-                      <StatusChip tone={attempt.passed ? 'done' : 'caution'}>
-                        {attempt.passed ? 'PASSED & CERTIFIED' : 'NEEDS REINFORCEMENT'}
-                      </StatusChip>
-                    </div>
-                    <h4 className="mt-1 font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
-                      {attempt.title}
-                    </h4>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {attempt.correctCount} of {attempt.totalQuestions} questions verified correct · Integrity: {Math.round(attempt.integrityScore * 100)}%
-                    </p>
-                  </div>
+            <div className="relative pt-4 pb-2 border-b border-purple-100 dark:border-zinc-800">
+              {/* Daily Bar Histogram */}
+              <div className="flex h-56 items-end gap-3 sm:gap-6">
+                {weeklyMinutes.map((item) => {
+                  const isPeak = item.minutes === peakMinutes;
+                  const isHovered = hoveredDay === item.day;
+                  return (
+                    <div
+                      key={item.day}
+                      onMouseEnter={() => setHoveredDay(item.day)}
+                      onMouseLeave={() => setHoveredDay(null)}
+                      className="flex flex-1 flex-col items-center justify-end h-full gap-2 group cursor-pointer"
+                    >
+                      {/* Tooltip value */}
+                      <span className={`text-sm font-bold transition-all ${
+                        isPeak || isHovered ? 'text-[#f5d626] scale-110' : 'text-slate-500 dark:text-zinc-400'
+                      }`}>
+                        {item.minutes}m
+                      </span>
 
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="font-display text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {attempt.score}%
+                      {/* Bar Pillar */}
+                      <div className="w-full flex-1 flex items-end">
+                        <div
+                          className={`w-full rounded-t-xl transition-all duration-500 relative ${
+                            isPeak
+                              ? 'bg-gradient-to-t from-[#4c1d70] to-[#f5d626] shadow-[0_0_15px_rgba(245,214,38,0.4)]'
+                              : 'bg-[#4c1d70] dark:bg-purple-900/80 group-hover:opacity-90'
+                          }`}
+                          style={{ height: `${(item.minutes / peakMinutes) * 100}%` }}
+                        >
+                          {isPeak && (
+                            <span className="absolute -top-6 inset-x-0 flex justify-center">
+                              <span className="bg-[#f5d626] text-zinc-950 font-bold text-[11px] px-1.5 py-0.5 rounded-full shadow-sm">
+                                Peak
+                              </span>
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-zinc-400">Final Score</div>
-                    </div>
-                    {onNavigate && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => onNavigate('assessments')}
-                      >
-                        Retake
-                      </Button>
-                    )}
-                  </div>
-                </div>
 
-                {attempt.missedConcepts && attempt.missedConcepts.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2 text-xs">
-                    <AlertCircleIcon className="h-4 w-4 text-amber-500 shrink-0" />
-                    <span className="text-zinc-600 dark:text-zinc-400">
-                      Reinforcement needed for concepts: <strong className="text-zinc-800 dark:text-zinc-200">{attempt.missedConcepts.join(', ')}</strong>
+                      {/* Day Label */}
+                      <span className={`text-sm font-bold transition-colors ${
+                        isPeak || isHovered ? 'text-[#4c1d70] dark:text-[#f5d626]' : 'text-slate-700 dark:text-zinc-300'
+                      }`}>
+                        {item.day}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Calendar Heatmap Matrix */}
+        {tab === 'consistency' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                  28-Day Consistency Heatmap
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">
+                  Color intensity indicates daily simulation and problem solving volume.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[13px] text-slate-500">
+                <span>Less</span>
+                {intensityClass.map((cls, idx) => (
+                  <span key={idx} className={`h-4 w-4 rounded border ${cls}`} />
+                ))}
+                <span>More</span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2.5 max-w-xl p-4 rounded-2xl bg-purple-50/30 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
+              {activity.map((lvl, i) => (
+                <div
+                  key={i}
+                  className={`h-8 w-8 rounded-lg border transition-transform hover:scale-110 cursor-pointer flex items-center justify-center text-xs font-bold ${intensityClass[lvl]}`}
+                  title={`Day ${i + 1}: Level ${lvl} activity`}
+                >
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Detailed Competency List with Target Mastery */}
+        {tab === 'mastery' && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                Detailed Topic Proficiency Scores
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">
+                Assessed through worked matrix exercises, statevector derivations, and circuit builds.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {skills.map((skill) => (
+                <div key={skill.name} className="p-4 rounded-2xl border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 space-y-2">
+                  <div className="flex justify-between text-sm font-semibold">
+                    <span className="text-zinc-900 dark:text-white">{skill.name}</span>
+                    <span className="font-bold text-[#4c1d70] dark:text-[#f5d626]">
+                      {skill.mastery}%
                     </span>
                   </div>
-                )}
-              </Card>
-            ))}
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-800">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#4c1d70] to-[#f5d626]"
+                      style={{ width: `${skill.mastery}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span>Baseline: 40%</span>
+                    <span>Target: 90% Mastery</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </section>
     </div>
   );
 }

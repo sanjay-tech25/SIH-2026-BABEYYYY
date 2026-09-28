@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   ExternalLinkIcon, 
   DownloadIcon, 
@@ -11,16 +11,11 @@ import {
   PlayIcon,
   Code2Icon,
   FileCodeIcon,
-  FlaskConicalIcon,
-  CheckCircle2Icon
+  HelpCircleIcon
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ChapterLab } from '../components/ChapterLab';
-import { CURRICULUM } from '../data/curriculumData';
-import { stateStore, type AppState } from '../services/stateStore';
-import { apiClient } from '../services/apiClient';
-import type { ViewId } from '../data/appData';
+import { PageHeader } from '../components/ui/PageHeader';
 
 interface LabNotebook {
   id: string;
@@ -43,147 +38,149 @@ const LAB_NOTEBOOKS: LabNotebook[] = [
     difficulty: 'Beginner',
     runtime: '45 min',
     description: 'The master laboratory notebook covering superposition, state collapse, the 4 Bell states, quantum teleportation, Grover search, and parameterized ansätze.',
-    notebookUrl: 'https://colab.research.google.com/github/qiskit-community/qiskit-community-tutorials/blob/master/terra/index.ipynb',
-    sampleCode: `# QUBOT Master Quantum Lab Essentials
-import numpy as np
-from qiskit import QuantumCircuit
+    notebookUrl: 'https://colab.research.google.com/#create=true',
+    sampleCode: `# Step 1: Install Qiskit and simulator in Google Colab
+!pip install -q qiskit qiskit-aer matplotlib pylatexenc numpy
+
+import qiskit
+from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
+from qiskit.visualization import plot_histogram
+import numpy as np
 
-# 1. Initialize 2-qubit Bell pair circuit
-qc = QuantumCircuit(2, 2)
+print(f"Qiskit SDK Version: {qiskit.__version__}")
+simulator = AerSimulator()
+print(f"Simulator Ready: {simulator.name}")
+
+# Module 1: Superposition Demo
+qc = QuantumCircuit(1, 1)
 qc.h(0)
-qc.cx(0, 1)
-qc.measure([0, 1], [0, 1])
+qc.measure(0, 0)
+print(qc.draw(output="text"))
 
-# 2. Simulate with AerSimulator
-sim = AerSimulator()
-job = sim.run(qc, shots=1024)
-result = job.result()
-counts = result.get_counts()
-print("Bell state |Φ+> measurement counts:", counts)`
+job = simulator.run(transpile(qc, simulator), shots=1024)
+print("Superposition Measurement Probabilities:", job.result().get_counts())`
   },
   {
     id: 'lab-1',
-    slug: 'superposition-bloch',
-    title: 'Visualizing Superposition & The Bloch Sphere',
-    category: 'Chapter 1: Foundations',
+    slug: 'superposition-basics',
+    title: 'Superposition & Getting Started with Qiskit',
+    category: 'Foundations',
     difficulty: 'Beginner',
     runtime: '15 min',
-    description: 'Explore the geometry of a single qubit. Rotate states along the X, Y, and Z axes using Pauli and Hadamard gates and plot 3D spherical projections.',
-    notebookUrl: 'https://colab.research.google.com/github/qiskit-community/qiskit-community-tutorials/blob/master/terra/index.ipynb',
-    sampleCode: `import numpy as np
-from qiskit import QuantumCircuit
-from qiskit.quantum_info import Statevector
+    description: 'Construct single-qubit superpositions, rotate states on the Bloch sphere, and visualize probability collapse using Qiskit Aer.',
+    notebookUrl: 'https://colab.research.google.com/github/Qiskit/qiskit-tutorials/blob/master/tutorials/circuits/1_getting_started_with_qiskit.ipynb',
+    sampleCode: `# Step 1: Install and import Qiskit
+!pip install -q qiskit qiskit-aer
 
-# Rotate qubit around Y-axis by pi/3
-qc = QuantumCircuit(1)
-qc.ry(np.pi / 3, 0)
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.visualization import plot_histogram
 
-# Compute pure statevector
-sv = Statevector.from_instruction(qc)
-print("Bloch statevector:", sv.data)
-print("State probabilities:", sv.probabilities_dict())`
+# Create single-qubit circuit with Hadamard gate
+qc = QuantumCircuit(1, 1)
+qc.h(0)
+qc.measure(0, 0)
+print(qc.draw())
+
+# Simulate
+sim = AerSimulator()
+counts = sim.run(transpile(qc, sim), shots=1000).result().get_counts()
+print("Measurement probabilities:", counts)`
   },
   {
     id: 'lab-2',
-    slug: 'bell-entanglement',
-    title: 'Creating and Verifying the 4 Bell States',
-    category: 'Chapter 2: Entanglement',
+    slug: 'bell-state-entanglement',
+    title: 'Bell State & Data Plotting in Qiskit',
+    category: 'Quantum States',
     difficulty: 'Intermediate',
     runtime: '20 min',
-    description: 'Synthesize the four maximally entangled Bell states (|Φ+⟩, |Φ-⟩, |Ψ+⟩, |Ψ-⟩), verify entanglement via concurrence, and test measurement correlations.',
-    notebookUrl: 'https://colab.research.google.com/github/qiskit-community/qiskit-community-tutorials/blob/master/terra/index.ipynb',
-    sampleCode: `from qiskit import QuantumCircuit
-from qiskit.quantum_info import Statevector, concurrence
-
-# Create |Ψ+> = (|01> + |10>) / sqrt(2)
-qc = QuantumCircuit(2)
-qc.h(0)
-qc.x(1)
-qc.cx(0, 1)
-
-sv = Statevector.from_instruction(qc)
-c = concurrence(sv)
-print("Statevector:", sv.data)
-print("Concurrence (1.0 = maximally entangled):", c)`
-  },
-  {
-    id: 'lab-3',
-    slug: 'teleportation-protocol',
-    title: 'Quantum Teleportation & Superdense Coding',
-    category: 'Chapter 3: Protocols',
-    difficulty: 'Intermediate',
-    runtime: '25 min',
-    description: 'Transmit an unknown quantum state using a shared entangled Bell pair, two classical bits, and unitary receiver corrections without violating the No-Cloning Theorem.',
-    notebookUrl: 'https://colab.research.google.com/github/qiskit-community/qiskit-community-tutorials/blob/master/terra/index.ipynb',
-    sampleCode: `from qiskit import QuantumCircuit
-
-# 3-qubit teleportation circuit
-qc = QuantumCircuit(3, 2)
-# Prepare secret state on q0
-qc.ry(1.234, 0)
-# Create Bell pair between q1 (Alice) and q2 (Bob)
-qc.h(1)
-qc.cx(1, 2)
-# Alice measures in Bell basis
-qc.cx(0, 1)
-qc.h(0)
-qc.measure([0, 1], [0, 1])
-# Bob applies conditional Pauli corrections
-qc.cx(1, 2)
-qc.cz(0, 2)
-print("Teleportation circuit depth:", qc.depth())`
-  },
-  {
-    id: 'lab-4',
-    slug: 'grover-search',
-    title: 'Grover Search Algorithm & Amplitude Amplification',
-    category: 'Chapter 4: Algorithms',
-    difficulty: 'Advanced',
-    runtime: '30 min',
-    description: 'Implement a multi-qubit oracle and diffusion operator. Witness constructive interference amplifying target states in O(√N) iterations.',
-    notebookUrl: 'https://colab.research.google.com/github/qiskit-community/qiskit-community-tutorials/blob/master/terra/index.ipynb',
-    sampleCode: `from qiskit import QuantumCircuit
+    description: 'Implement the canonical Einstein-Podolsky-Rosen (EPR) pair (|00⟩ + |11⟩)/√2 and plot measurement counts and state distributions.',
+    notebookUrl: 'https://colab.research.google.com/github/Qiskit/qiskit-tutorials/blob/master/tutorials/circuits/2_plotting_data_in_qiskit.ipynb',
+    sampleCode: `import qiskit
+from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
 
-# 2-qubit Grover searching for |11>
+# Create 2-qubit Bell circuit
 qc = QuantumCircuit(2, 2)
-qc.h([0, 1])
-# Oracle: flip phase of |11>
-qc.cz(0, 1)
-# Diffusion operator
-qc.h([0, 1])
-qc.z([0, 1])
-qc.cz(0, 1)
-qc.h([0, 1])
+qc.h(0)         # Put qubit 0 into equal superposition
+qc.cx(0, 1)     # Entangle qubit 1 with qubit 0
 qc.measure([0, 1], [0, 1])
 
 sim = AerSimulator()
-counts = sim.run(qc, shots=1024).result().get_counts()
-print("Search outcome (100% |11>):", counts)`
+counts = sim.run(transpile(qc, sim), shots=2048).result().get_counts()
+print("Bell state measurements:", counts)`
+  },
+  {
+    id: 'lab-3',
+    slug: 'quantum-teleportation',
+    title: 'Quantum State Teleportation Protocol',
+    category: 'Protocols',
+    difficulty: 'Advanced',
+    runtime: '30 min',
+    description: 'Transmit an unknown quantum state using a shared entangled pair and two bits of classical communication.',
+    notebookUrl: 'https://colab.research.google.com/#create=true',
+    sampleCode: `from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit_aer import AerSimulator
+
+# Teleportation registers: 1 source + 1 Alice + 1 Bob
+qr = QuantumRegister(3, name="q")
+crz = ClassicalRegister(1, name="crz")
+crx = ClassicalRegister(1, name="crx")
+qc = QuantumCircuit(qr, crz, crx)
+
+# 1. Prepare unknown state on Alice's qubit
+qc.rx(1.23, 0)
+qc.barrier()
+
+# 2. Shared Bell pair between Alice (q1) and Bob (q2)
+qc.h(1)
+qc.cx(1, 2)
+qc.barrier()
+
+# 3. Alice performs Bell measurement
+qc.cx(0, 1)
+qc.h(0)
+qc.measure(0, crz)
+qc.measure(1, crx)
+qc.barrier()
+
+print(qc.draw(output="text"))`
+  },
+  {
+    id: 'lab-4',
+    slug: 'grover-algorithm',
+    title: "Grover's Quadratic Search Algorithm",
+    category: 'Algorithms',
+    difficulty: 'Advanced',
+    runtime: '35 min',
+    description: 'Demonstrate quadratic speedup over classical brute-force search using quantum phase inversion and the diffusion operator.',
+    notebookUrl: 'https://colab.research.google.com/github/Qiskit/qiskit-tutorials/blob/master/tutorials/algorithms/06_grover.ipynb',
+    sampleCode: `from qiskit import QuantumCircuit
+import numpy as np
+
+# 2-qubit Grover Search for state |11>
+grover_circuit = QuantumCircuit(2, 2)
+grover_circuit.h([0, 1])
+
+# Oracle marking |11> (Controlled-Z)
+grover_circuit.cz(0, 1)
+
+# Diffuser (Amplitude amplification)
+grover_circuit.h([0, 1])
+grover_circuit.x([0, 1])
+grover_circuit.cz(0, 1)
+grover_circuit.x([0, 1])
+grover_circuit.h([0, 1])
+grover_circuit.measure([0, 1], [0, 1])
+
+print(grover_circuit.draw(output="text"))`
   }
 ];
 
-interface OpenLabProps {
-  onNavigate?: (id: ViewId) => void;
-}
-
-export function OpenLab({ onNavigate }: OpenLabProps = {}) {
-  const [activeTab, setActiveTab] = useState<'interactive' | 'notebooks'>('interactive');
-  const [selectedChapterId, setSelectedChapterId] = useState<string>('ch-1');
-  const [selectedTopicId, setSelectedTopicId] = useState<string>('t1-1');
+export function OpenLab() {
   const [selectedLab, setSelectedLab] = useState<LabNotebook>(LAB_NOTEBOOKS[0]);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [sandboxRunning, setSandboxRunning] = useState(false);
-  const [sandboxOutput, setSandboxOutput] = useState<string | null>(null);
-
-  const [appState, setAppState] = useState<AppState>(stateStore.getState());
-  useEffect(() => {
-    return stateStore.subscribe(setAppState);
-  }, []);
-
-  const currentChapter = CURRICULUM.find(c => c.id === selectedChapterId) || CURRICULUM[0];
-  const currentTopic = currentChapter.topics.find(t => t.id === selectedTopicId) || currentChapter.topics[0];
 
   const handleCopy = () => {
     navigator.clipboard.writeText(selectedLab.sampleCode);
@@ -191,239 +188,142 @@ export function OpenLab({ onNavigate }: OpenLabProps = {}) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleRunSandbox = async (code: string) => {
-    setSandboxRunning(true);
-    setSandboxOutput(null);
-    try {
-      const res = await apiClient.executeSandboxCode(code);
-      setSandboxOutput(res?.stdout || res?.stderr || 'Execution finished successfully.');
-    } catch {
-      setSandboxOutput('Simulation completed locally via pure-NumPy tensor fallback.');
-    } finally {
-      setSandboxRunning(false);
-    }
-  };
-
   return (
-    <div className="space-y-8 antialiased">
-      {/* 1. Header with Tab Switcher */}
+    <div className="space-y-8">
+      {/* 1. Open Editorial Header */}
       <header className="border-b border-purple-100/80 pb-6">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-mono text-slate-500 mb-2">
           <span className="flex items-center gap-2 font-medium tracking-wide uppercase text-[13px] text-purple-950/70">
             <span className="h-2 w-2 rounded-full bg-[#f5d626]" />
-            Quantum Computational Lab & Sandbox Hub
+            Google Colab Integration • Free GPU/TPU Runtime
           </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab('interactive')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                activeTab === 'interactive'
-                  ? 'bg-[#4c1d70] text-[#f5d626] shadow-sm'
-                  : 'bg-purple-50 text-purple-900 hover:bg-purple-100'
-              }`}
+          <div className="flex items-center gap-3">
+            <a
+              href="/qubot_quantum_lab_essentials.ipynb"
+              download="qubot_quantum_lab_essentials.ipynb"
+              className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-white px-3.5 py-1.5 text-sm font-poppins font-semibold text-[#4c1d70] hover:bg-purple-50 transition shadow-sm"
             >
-              Interactive Chapter Lab
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('notebooks')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                activeTab === 'notebooks'
-                  ? 'bg-[#4c1d70] text-[#f5d626] shadow-sm'
-                  : 'bg-purple-50 text-purple-900 hover:bg-purple-100'
-              }`}
+              <DownloadIcon className="h-3.5 w-3.5" />
+              Download .ipynb
+            </a>
+            <a
+              href="https://colab.research.google.com/#create=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#4c1d70] px-4 py-1.5 text-sm font-orbitron font-bold text-white hover:bg-[#3b1458] transition shadow-sm"
             >
-              Colab Notebook Templates
-            </button>
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+              Open Google Colab
+            </a>
           </div>
         </div>
         <h1 className="font-orbitron text-3xl sm:text-4xl font-bold tracking-tight text-[#1a052e] dark:text-white">
-          {activeTab === 'interactive' ? 'Interactive Quantum Mission Lab' : 'Google Colab Master Notebooks'}
+          Open Quantum Lab & Notebooks
         </h1>
         <p className="mt-2 font-poppins text-base text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-          {activeTab === 'interactive' 
-            ? 'Execute real circuit missions with live Qiskit Aer simulation, Bloch sphere inspection, and Socratic diagnosis.'
-            : 'Pre-configured cloud Jupyter notebooks designed for hands-on hypothesis testing in Google Colab with Qiskit.'}
+          Download complete, self-contained Jupyter notebooks featuring all 5 curriculum modules configured for Qiskit 1.2+ with Aer simulation.
         </p>
       </header>
 
-      {/* 2. Interactive Chapter Lab Tab */}
-      {activeTab === 'interactive' && (
-        <div className="space-y-6">
-          {/* Chapter Selector */}
-          <div className="flex flex-wrap gap-2 border-b border-purple-100/60 pb-3">
-            {CURRICULUM.map((chapter) => {
-              const isSelected = selectedChapterId === chapter.id;
-              const completedInChapter = chapter.topics.filter(t => appState.progress.completedLabs.includes(t.lab.id)).length;
+      {/* Main Grid: Notebook Directory & Code Preview */}
+      <div className="grid gap-10 lg:grid-cols-12 pt-2">
+        {/* Notebook List (Unboxed Clean List - ZERO Card Box) */}
+        <div className="lg:col-span-5 space-y-3">
+          <div className="pb-2 border-b border-purple-100/80">
+            <p className="text-sm font-mono font-semibold uppercase tracking-wider text-slate-500">
+              Laboratory Modules ({LAB_NOTEBOOKS.length})
+            </p>
+          </div>
+
+          <div className="divide-y divide-purple-100/80 border-b border-purple-100/80">
+            {LAB_NOTEBOOKS.map((lab) => {
+              const isSelected = selectedLab.id === lab.id;
               return (
-                <button
-                  key={chapter.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedChapterId(chapter.id);
-                    setSelectedTopicId(chapter.topics[0].id);
-                  }}
-                  className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                <div
+                  key={lab.id}
+                  onClick={() => setSelectedLab(lab)}
+                  className={`py-4 px-2.5 rounded-xl cursor-pointer transition-colors ${
                     isSelected
-                      ? 'bg-[#4c1d70] text-white shadow-sm font-bold'
-                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
+                      ? 'bg-purple-100/60 text-[#4c1d70]'
+                      : 'hover:bg-purple-50/40'
                   }`}
                 >
-                  Chapter {chapter.number}: {chapter.title.split(':')[1]?.trim() || chapter.title}
-                  {completedInChapter > 0 && (
-                    <span className="ml-1.5 rounded-full bg-[#f5d626] text-purple-950 px-1.5 py-0.2 text-[10px] font-bold">
-                      {completedInChapter}/{chapter.topics.length}
+                  <div className="flex items-center justify-between text-[13px] font-mono">
+                    <span className="font-semibold uppercase tracking-wider text-[#4c1d70]">
+                      {lab.category}
                     </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Topic Selector */}
-          <div className="flex flex-wrap gap-2">
-            {currentChapter.topics.map((topic) => {
-              const isSelected = selectedTopicId === topic.id;
-              const isDone = appState.progress.completedLabs.includes(topic.lab.id);
-              return (
-                <button
-                  key={topic.id}
-                  type="button"
-                  onClick={() => setSelectedTopicId(topic.id)}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition ${
-                    isSelected
-                      ? 'border-[#4c1d70] bg-purple-50 text-[#4c1d70] font-bold shadow-sm'
-                      : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900'
-                  }`}
-                >
-                  {isDone ? (
-                    <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-600" />
-                  ) : (
-                    <FlaskConicalIcon className="h-3.5 w-3.5 text-purple-600" />
-                  )}
-                  {topic.number}: {topic.title}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Practical Open Lab Component */}
-          <ChapterLab
-            key={currentTopic.lab.id}
-            mission={currentTopic.lab}
-            chapterId={currentChapter.id}
-            topicTitle={currentTopic.title}
-            onCompleted={() => {
-              stateStore.completeLab(currentTopic.lab.id);
-            }}
-            onNavigate={onNavigate}
-          />
-        </div>
-      )}
-
-      {/* 3. Colab Master Notebooks Tab */}
-      {activeTab === 'notebooks' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Notebook Catalog List */}
-          <div className="lg:col-span-5 space-y-4">
-            <h2 className="font-orbitron text-lg font-bold text-[#1a052e] dark:text-white">
-              Curated Master Notebooks ({LAB_NOTEBOOKS.length})
-            </h2>
-            <div className="space-y-3">
-              {LAB_NOTEBOOKS.map((lab) => {
-                const isSelected = selectedLab.id === lab.id;
-                return (
-                  <button
-                    key={lab.id}
-                    type="button"
-                    onClick={() => setSelectedLab(lab)}
-                    className={`w-full text-left p-4 rounded-xl border transition ${
-                      isSelected
-                        ? 'border-[#4c1d70] bg-purple-50/70 shadow-sm'
-                        : 'border-purple-100/60 bg-white hover:border-purple-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs font-mono text-purple-900 mb-1">
-                      <span>{lab.category}</span>
-                      <span className="font-bold text-amber-600">{lab.difficulty}</span>
-                    </div>
-                    <h3 className="font-orbitron text-sm font-bold text-slate-900">{lab.title}</h3>
-                    <p className="mt-1 text-xs text-slate-600 line-clamp-2">{lab.description}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Selected Notebook Inspector & Sandbox Runner */}
-          <div className="lg:col-span-7 space-y-4">
-            <Card className="p-6 border-purple-100">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-100 pb-4">
-                <div>
-                  <span className="text-xs font-mono text-purple-700 font-bold uppercase">{selectedLab.category}</span>
-                  <h2 className="font-orbitron text-xl font-bold text-slate-900">{selectedLab.title}</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={selectedLab.notebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#f5d626] text-purple-950 font-orbitron font-bold text-xs px-3 py-2 hover:bg-[#e2c317] transition shadow-sm"
-                  >
-                    <ExternalLinkIcon className="h-3.5 w-3.5" />
-                    Open in Colab
-                  </a>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="flex items-center gap-1.5 text-xs"
-                  >
-                    {copiedCode ? <CheckIcon className="h-3.5 w-3.5 text-emerald-600" /> : <CopyIcon className="h-3.5 w-3.5" />}
-                    {copiedCode ? 'Copied' : 'Copy Python'}
-                  </Button>
-                </div>
-              </div>
-
-              <p className="mt-4 text-sm text-slate-600 font-poppins">{selectedLab.description}</p>
-
-              {/* Code Sandbox View */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between bg-slate-900 text-slate-200 px-4 py-2 rounded-t-lg text-xs font-mono">
-                  <span className="flex items-center gap-2">
-                    <Code2Icon className="h-3.5 w-3.5 text-[#f5d626]" />
-                    {selectedLab.slug}.py
-                  </span>
-                  <button
-                    type="button"
-                    disabled={sandboxRunning}
-                    onClick={() => handleRunSandbox(selectedLab.sampleCode)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#f5d626] hover:text-yellow-300 disabled:opacity-50"
-                  >
-                    <PlayIcon className="h-3.5 w-3.5" />
-                    {sandboxRunning ? 'Simulating...' : 'Run in Python Sandbox'}
-                  </button>
-                </div>
-                <pre className="bg-slate-950 text-emerald-400 p-4 rounded-b-lg font-mono text-xs overflow-x-auto border-t border-slate-800 max-h-[300px]">
-                  {selectedLab.sampleCode}
-                </pre>
-              </div>
-
-              {/* Sandbox Execution Output Terminal */}
-              {sandboxOutput && (
-                <div className="mt-4 rounded-lg bg-zinc-900 border border-zinc-800 p-4 text-xs font-mono">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-2 border-b border-zinc-800 pb-1">
-                    <TerminalSquareIcon className="h-3.5 w-3.5 text-[#f5d626]" />
-                    <span>Execution Output (Qiskit Aer Simulator):</span>
+                    <span className="text-slate-400">{lab.runtime}</span>
                   </div>
-                  <pre className="text-zinc-200 whitespace-pre-wrap">{sandboxOutput}</pre>
+                  <h3 className="mt-1 font-orbitron text-sm font-bold text-[#1a052e]">
+                    {lab.title}
+                  </h3>
+                  <p className="mt-1 font-poppins text-sm text-slate-500 line-clamp-2 leading-relaxed">
+                    {lab.description}
+                  </p>
                 </div>
-              )}
-            </Card>
+              );
+            })}
           </div>
         </div>
-      )}
+
+        {/* Selected Notebook Code & Action */}
+        <div key={selectedLab.id} className="genie-content space-y-6 lg:col-span-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#4c1d70]">
+                Selected Lab Module
+              </span>
+              <h3 className="font-orbitron text-lg sm:text-xl font-bold text-[#1a052e] dark:text-white">
+                {selectedLab.title}
+              </h3>
+            </div>
+
+            <a
+              href={selectedLab.notebookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-[#f5d626] px-5 text-sm font-orbitron font-bold text-zinc-950 transition-all hover:bg-yellow-400 shadow-md hover:shadow-lg pulse-aura active:scale-95 shrink-0"
+            >
+              <span>Launch in Colab</span>
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+            </a>
+          </div>
+
+          <p className="font-poppins text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
+            {selectedLab.description}
+          </p>
+
+          {/* Embedded Code Snippet */}
+          <div className="rounded-2xl border border-purple-900/60 shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between bg-[#250b3a] px-4 py-2.5">
+              <div className="flex items-center gap-2 text-sm font-mono text-purple-200">
+                <Code2Icon className="h-4 w-4 text-[#f5d626]" />
+                <span>{selectedLab.slug}.py • Qiskit 1.2+</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1.5 rounded-full bg-purple-900/80 border border-purple-600/50 px-3 py-1 text-sm font-semibold text-[#f5d626] transition-colors hover:bg-purple-800"
+              >
+                {copiedCode ? (
+                  <>
+                    <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <CopyIcon className="h-3.5 w-3.5" />
+                    Copy Code
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="overflow-x-auto bg-[#160624] p-4 font-mono text-sm leading-relaxed text-[#f5d626] max-h-[380px]">
+              {selectedLab.sampleCode}
+            </pre>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

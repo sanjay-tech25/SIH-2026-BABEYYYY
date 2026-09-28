@@ -33,7 +33,6 @@ import {
   type UserRole 
 } from '../services/stateStore';
 import { audioEngine } from '../services/audioEngine';
-import { apiClient } from '../services/apiClient';
 import type { ViewId } from '../data/appData';
 
 type SettingsProps = {
@@ -109,14 +108,6 @@ export function Settings({ dark, onToggleDark, onNavigate }: SettingsProps) {
     if (settings.soundEnabled !== undefined) {
       audioEngine.setMuted(!settings.soundEnabled);
     }
-
-    // 4. Dispatch Telemetry to Backend
-    apiClient.sendQubotEvent('SETTINGS_UPDATED', {
-      name,
-      role,
-      ageBracket: ageTier,
-      learningGoal
-    }).catch(() => {});
 
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
