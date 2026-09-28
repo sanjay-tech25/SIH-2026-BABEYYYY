@@ -1,335 +1,278 @@
-import React from 'react';
-import { ArrowRightIcon, ClockIcon, PlayIcon, CheckIcon, SparklesIcon, FlameIcon, ZapIcon, CpuIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowRightIcon, ClockIcon, PlayIcon, CheckIcon, SparklesIcon, TargetIcon, BookOpenIcon, CompassIcon } from 'lucide-react';
+import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { learner, courses, todaysPlan, type ViewId } from '../data/appData';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { stateStore, type AppState } from '../services/stateStore';
+import { CURRICULUM } from '../data/curriculumData';
+import { apiClient } from '../services/apiClient';
+import type { ViewId } from '../data/appData';
 
 type DashboardProps = {
   onNavigate: (id: ViewId) => void;
 };
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const current = courses[0];
-  const minutesToday = todaysPlan.reduce((sum, item) => sum + item.minutes, 0);
-  const doneToday = todaysPlan.filter((item) => item.done).length;
+  const [appState, setAppState] = useState<AppState>(stateStore.getState());
+  const [adaptiveRoadmap, setAdaptiveRoadmap] = useState<any>(null);
+
+  useEffect(() => {
+    return stateStore.subscribe(setAppState);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    apiClient.getAdaptiveRoadmap().then((res) => {
+      if (mounted && res) setAdaptiveRoadmap(res);
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+
+  const p = appState.progress;
+  const user = appState.user;
+  const isBrandNew = p.completedLessons.length === 0;
+
+  // Formatted current date
+  const todayFormatted = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+
+  // Calculate dynamic active chapter & pending topic
+  const activeChapter = CURRICULUM.find(c => c.id === p.activeChapterId) || CURRICULUM[0];
+  const pendingTopic = activeChapter.topics.find(t => !p.completedLessons.includes(t.id)) || activeChapter.topics[0];
+
+  const planItems = [
+    {
+      id: 'plan-1',
+      title: `${pendingTopic.title}`,
+      kind: 'Theory & Dirac Formalism',
+      minutes: pendingTopic.minutes || 12,
+      done: p.completedLessons.includes(pendingTopic.id),
+      target: 'lesson' as ViewId
+    },
+    {
+      id: 'plan-2',
+      title: `${pendingTopic.lab.title}`,
+      kind: 'AerSimulator Practical Lab',
+      minutes: 15,
+      done: p.completedLabs.includes(pendingTopic.lab.id),
+      target: 'openlab' as ViewId
+    },
+    {
+      id: 'plan-3',
+      title: 'Topic Diagnostic Skill Check',
+      kind: 'Adaptive Diagnostic Practice',
+      minutes: 10,
+      done: Boolean(p.quizScores[pendingTopic.id]),
+      target: 'assessments' as ViewId
+    }
+  ];
+
+  const minutesToday = planItems.reduce((sum, item) => sum + item.minutes, 0);
+  const doneToday = planItems.filter((item) => item.done).length;
+
+  const totalTopics = CURRICULUM.reduce((acc, c) => acc + c.topics.length, 0);
+  const coursePercent = totalTopics > 0 ? Math.round((p.completedLessons.length / totalTopics) * 100) : 0;
+
+  const accuracy = p.totalQuizAttempts > 0
+    ? Math.round((p.correctQuizAnswers / p.totalQuizAttempts) * 100)
+    : 0;
 
   return (
-    <div className="w-full min-w-0 space-y-8 py-2 antialiased">
-      
-      {/* Top Context Status Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-100/80 pb-4">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-2.5 w-2.5 rounded-full bg-[#f5d626] ring-4 ring-yellow-100 animate-pulse" />
-          <span className="text-sm font-mono font-bold tracking-wider uppercase text-[#4c1d70]">
-            Thursday, 10 September • Active Student Workspace
-          </span>
-        </div>
-        <div className="flex items-center gap-3 text-sm font-semibold text-slate-500">
-          <span className="rounded-full bg-purple-50 px-3 py-1 text-purple-900 border border-purple-200 font-orbitron text-[13px] font-bold">
-            Level 4: Quantum Explorer
-          </span>
-          <span className="font-poppins text-amber-600 font-semibold flex items-center gap-1.5">
-            <FlameIcon className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-            <span><strong className="font-orbitron font-bold text-amber-700 dark:text-[#f5d626]">7</strong> Day Streak</span>
-          </span>
-        </div>
-      </div>
-
-      {/* 1. EDITORIAL GREETING (Integrated directly on canvas, zero box) */}
-      <div className="relative pt-1 pb-2">
-        <h1 className="font-orbitron text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-[#1a052e] dark:text-white leading-tight">
-          Morning, {learner.name}. <span className="text-[#d8a800] dark:text-[#f5d626]">Two lessons left</span> in phase gates.
-        </h1>
-        <p className="font-poppins mt-2 text-base sm:text-lg text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-          Your curriculum path today takes about <strong className="text-slate-900 dark:text-zinc-100 font-semibold">{minutesToday} minutes</strong>. Complete worked matrix examples to unlock the <em>Quantum Entanglement & Bell State</em> tier.
+    <div className="space-y-12">
+      {/* Live Learner Greeting — "Hello, shall we start?" */}
+      <section>
+        <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          {todayFormatted}
         </p>
-      </div>
+        <h1 className="mt-2 max-w-2xl font-display text-[2.25rem] font-bold leading-[1.1] tracking-[-0.03em] text-zinc-900 dark:text-zinc-50">
+          {isBrandNew
+            ? `Hello, ${user.name}! Shall we start?`
+            : `Welcome back, ${user.name}. Let's advance your quantum roadmap.`}
+        </h1>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {isBrandNew
+            ? 'Welcome to your quantum computing journey. Your path begins from the ground up with the mathematics of qubits, Dirac notation, and superposition.'
+            : `Today's recommended trajectory takes approximately ${minutesToday} minutes across theory and verified laboratory missions.`}
+        </p>
+      </section>
 
-      {/* 2. MAIN TWO-COLUMN EDITORIAL SURFACE (67% / 33%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start pt-2">
-        
-        {/* LEFT COLUMN: PRIMARY LEARNING STREAM (8 cols / ~67%) */}
-        <div className="lg:col-span-8 space-y-10">
-          
-          {/* A. ACTIVE LESSON (Continuous Editorial Unit - ZERO Card Box) */}
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-[13px] font-bold tracking-wider uppercase text-[#4c1d70] dark:text-purple-300">
-                  Unit 03 • Lesson 8 of {current.lessonsTotal}
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="font-medium text-slate-500 dark:text-zinc-400">{current.title}</span>
-              </div>
-              <span className="font-mono text-sm font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                <ClockIcon className="h-3.5 w-3.5" />
-                {current.minutesLeft} min left in matrix unitary
+      {/* Hero Action: Start Journey or Pick up where you left off */}
+      <section aria-labelledby="continue-heading">
+        <h2
+          id="continue-heading"
+          className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50"
+        >
+          {isBrandNew ? 'Start Your Learning Journey' : 'Pick Up Where You Left Off'}
+        </h2>
+        <Card className="mt-3 p-6 sm:p-7 border-l-4 border-l-emerald-600 bg-white dark:bg-zinc-900">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-xl">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <TargetIcon className="h-3.5 w-3.5" />
+                {activeChapter.title} · Topic {pendingTopic.number}
               </span>
-            </div>
-
-            <div>
-              <h2 className="font-orbitron text-2xl sm:text-3xl font-bold text-[#1a052e] dark:text-white tracking-tight">
-                Phase gates and rotations
-              </h2>
-              <p className="font-poppins mt-2 text-base text-slate-600 dark:text-zinc-400 leading-relaxed max-w-2xl">
-                You stopped halfway through analyzing the Z-axis phase evolution matrix <code className="font-mono text-sm bg-purple-50 dark:bg-purple-950/50 text-purple-900 dark:text-purple-200 px-1.5 py-0.5 rounded border border-purple-200/80 dark:border-purple-800/40">U(θ, φ)</code>. Resume to derive relative phase interference on state <span className="font-mono text-sm text-purple-900 dark:text-purple-300 font-semibold">|+⟩</span>.
+              <h3 className="mt-1.5 font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                {pendingTopic.title}
+              </h3>
+              <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {pendingTopic.summary}
               </p>
-            </div>
-
-            {/* Inline Minimal Progress Bar & Action */}
-            <div className="pt-2 space-y-3 w-full">
-              <div className="flex justify-between text-sm font-poppins text-slate-500 dark:text-zinc-400">
-                <span>{current.lessonsDone} of {current.lessonsTotal} completed</span>
-                <span className="font-orbitron font-bold text-[#4c1d70] dark:text-[#f5d626]">58% Done</span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-zinc-800">
-                <div
-                  className="h-full rounded-full bg-[#4c1d70] transition-all duration-700 ease-out"
-                  style={{ width: `${(current.lessonsDone / current.lessonsTotal) * 100}%` }}
+              <div className="mt-5 max-w-sm">
+                <div className="flex items-baseline justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">
+                  <span>
+                    {p.completedLessons.length} of {totalTopics} topics completed · {coursePercent}%
+                  </span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-zinc-700 dark:text-zinc-300">
+                    <ClockIcon className="h-3.5 w-3.5" />
+                    ~{pendingTopic.minutes} min
+                  </span>
+                </div>
+                <ProgressBar
+                  value={coursePercent}
+                  label="Curriculum progress"
+                  className="h-2"
                 />
               </div>
             </div>
 
-            <div className="pt-2">
-              <Button
-                onClick={() => onNavigate('lesson')}
-                className="inline-flex items-center gap-2 rounded-full bg-[#4c1d70] px-6 py-2.5 text-sm font-orbitron font-bold text-white hover:bg-[#3b1458] active:scale-95 transition-all shadow-sm group/btn"
-              >
-                <span>Resume Lesson 8</span>
-                <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-1 text-[#f5d626]" />
-              </Button>
-            </div>
-          </section>
+            <Button
+              onClick={() => {
+                stateStore.setActiveLesson(activeChapter.id, pendingTopic.id);
+                onNavigate('lesson');
+              }}
+              className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <PlayIcon className="h-4 w-4" />
+              {isBrandNew ? 'Begin Lesson 1.1' : `Resume: ${pendingTopic.title.split(':')[0]}`}
+            </Button>
+          </div>
+        </Card>
+      </section>
 
-          {/* B. TODAY'S SCHEDULED AGENDA (Continuous Editorial List) */}
-          <section className="pt-2 space-y-4">
-            <div className="flex items-baseline justify-between border-b border-purple-100/80 dark:border-zinc-800 pb-2.5">
-              <div className="flex items-center gap-3">
-                <h3 className="font-orbitron text-lg sm:text-xl font-bold text-[#1a052e] dark:text-white tracking-tight">Today's Agenda</h3>
-                <span className="font-orbitron text-sm font-semibold text-slate-500">
-                  ({doneToday}/{todaysPlan.length} completed)
-                </span>
-              </div>
-              <span className="text-sm font-mono text-slate-500">Est. ~{minutesToday} mins</span>
-            </div>
-
-            <div className="divide-y divide-purple-100/70 border-b border-purple-100/70">
-              {todaysPlan.map((item) => (
-                <div
-                  key={item.id}
-                  className="group flex items-center justify-between gap-4 py-3.5 px-1 transition-colors hover:bg-purple-50/30"
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all ${
-                        item.done
-                          ? 'bg-emerald-500 text-white'
-                          : 'border border-slate-300 text-transparent group-hover:border-[#4c1d70]'
-                      }`}
-                    >
-                      <CheckIcon className="h-3 w-3 stroke-[3]" />
-                    </span>
-                    <div className="min-w-0">
-                      <p
-                        className={`text-base font-medium transition-colors ${
-                          item.done
-                            ? 'text-slate-400 line-through'
-                            : 'text-[#1a052e] group-hover:text-[#4c1d70]'
-                        }`}
-                      >
-                        {item.title}
-                      </p>
-                      <p className="text-[13px] font-mono text-slate-500">
-                        <span className="text-[#4c1d70] font-semibold">{item.kind}</span> • {item.minutes} min
-                      </p>
-                    </div>
-                  </div>
-
-                  {item.done ? (
-                    <span className="text-sm font-mono text-emerald-600 font-medium shrink-0">Done ✓</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onNavigate(item.kind === 'Practice' ? 'practice' : 'lesson')}
-                      className="shrink-0 inline-flex items-center gap-1 text-sm font-semibold text-[#4c1d70] hover:text-purple-900 bg-purple-50/80 hover:bg-purple-100/80 px-3 py-1 rounded-md transition-all active:scale-95"
-                    >
-                      <span>Start</span>
-                      <ArrowRightIcon className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* C. CURRICULUM MILESTONE NOTE (Editorial Left-Accent Note - ZERO Card Box) */}
-          <section className="border-l-2 border-[#4c1d70] pl-5 py-1 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-mono text-[#4c1d70] font-semibold">
-              <SparklesIcon className="h-3.5 w-3.5 text-[#d8a800]" />
-              <span>Next Milestone • ~15 mins</span>
-            </div>
-            <h4 className="text-lg font-bold text-[#1a052e]">
-              2-Qubit Entanglement & Bell Pairs
-            </h4>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              You've cleared linear algebra and single-qubit rotations. Building Bell states <code className="font-mono text-sm bg-purple-50 text-purple-900 px-1 rounded border border-purple-200/80">|Φ+⟩ = (|00⟩+|11⟩)/√2</code> and CNOT logic will land easily.
-            </p>
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => onNavigate('path')}
-                className="text-sm font-semibold text-[#4c1d70] hover:underline inline-flex items-center gap-1 group/link"
-              >
-                <span>Explore Milestone Pathway</span>
-                <ArrowRightIcon className="h-3 w-3 transition-transform group-hover/link:translate-x-0.5" />
-              </button>
-            </div>
-          </section>
-
+      {/* Today's Plan Checklist */}
+      <section aria-labelledby="plan-heading">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2
+            id="plan-heading"
+            className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50"
+          >
+            Today's Learning Schedule
+          </h2>
+          <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            {doneToday} of {planItems.length} modules completed
+          </p>
         </div>
-
-        {/* RIGHT COLUMN: SINGLE UNIFIED TELEMETRY RAIL (4 cols / ~33%) */}
-        {/* Handcrafted sidebar with clean dividers instead of 3 floating white card boxes! */}
-        <aside className="lg:col-span-4 space-y-8 lg:border-l lg:border-purple-100/80 lg:pl-8">
-          
-          {/* 1. Study Velocity */}
-          <div className="space-y-4">
-            <div className="flex items-baseline justify-between border-b border-purple-100/80 pb-2">
-              <h3 className="text-base font-bold text-[#1a052e] tracking-tight">Study Velocity</h3>
-              <span className="text-sm font-mono font-semibold text-amber-600 flex items-center gap-1">
-                <FlameIcon className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                {learner.streakDays} Days
+        <ul className="mt-3 divide-y divide-zinc-200 border-y border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          {planItems.map((item) => (
+            <li key={item.id} className="flex items-center gap-4 py-3.5">
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+                  item.done
+                    ? 'border-emerald-600 bg-emerald-600 text-white'
+                    : 'border-zinc-300 text-transparent dark:border-zinc-700'
+                }`}
+                aria-hidden="true"
+              >
+                <CheckIcon className="h-4 w-4" />
               </span>
-            </div>
-
-            {/* 7-Day Sparkline Bar Chart */}
-            <div className="space-y-2">
-              <div className="flex h-20 items-end justify-between gap-2 px-1">
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-purple-200" style={{ height: '35%' }} />
-                  <span className="text-xs font-mono text-slate-400">M</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-purple-300" style={{ height: '50%' }} />
-                  <span className="text-xs font-mono text-slate-400">T</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-purple-200" style={{ height: '40%' }} />
-                  <span className="text-xs font-mono text-slate-400">W</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-[#4c1d70]" style={{ height: '95%' }} />
-                  <span className="text-xs font-mono font-bold text-[#4c1d70]">T</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-purple-400" style={{ height: '65%' }} />
-                  <span className="text-xs font-mono text-slate-400">F</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-purple-200" style={{ height: '30%' }} />
-                  <span className="text-xs font-mono text-slate-400">S</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1">
-                  <div className="w-full rounded-t bg-purple-300" style={{ height: '45%' }} />
-                  <span className="text-xs font-mono text-slate-400">S</span>
-                </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`text-sm font-semibold ${
+                    item.done
+                      ? 'text-zinc-400 line-through dark:text-zinc-500'
+                      : 'text-zinc-900 dark:text-zinc-100'
+                  }`}
+                >
+                  {item.title}
+                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {item.kind} · {item.minutes} min
+                </p>
               </div>
+              {!item.done && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate(item.target)}
+                  className="shrink-0 gap-1 text-xs"
+                >
+                  Start
+                  <ArrowRightIcon className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-              <p className="text-center text-[13px] font-mono text-slate-500">
-                Peak: <strong className="text-[#4c1d70]">82 min</strong> on Thursday
-              </p>
+      {/* Recommendations & Live Weekly Telemetry */}
+      <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <Card className="p-6 flex flex-col justify-between">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400">
+              <SparklesIcon className="h-3.5 w-3.5" />
+              AI Trajectory Recommendation
             </div>
-
-            {/* Clean Data Stat Row */}
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-purple-100/70 text-left">
-              <div>
-                <div className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400">Weekly Time</div>
-                <div className="text-xl font-bold font-orbitron text-[#1a052e] dark:text-white">10.8 <span className="text-sm font-normal text-slate-500 font-poppins">hrs</span></div>
-              </div>
-              <div>
-                <div className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400">Accuracy</div>
-                <div className="text-xl font-bold font-orbitron text-emerald-600">91%</div>
-              </div>
-            </div>
+            <h3 className="mt-2 font-display text-lg font-bold text-zinc-900 dark:text-zinc-50">
+              {adaptiveRoadmap?.recommended_next_concept
+                ? `Next BKT Concept: ${adaptiveRoadmap.recommended_next_concept.replace(/_/g, ' ').toUpperCase()}`
+                : isBrandNew
+                ? 'First Milestone Target: MS-01 (Hilbert Space)'
+                : 'Advancing Toward Milestone: MS-02'}
+            </h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+              {adaptiveRoadmap?.recommended_next_concept
+                ? `The Bayesian Knowledge Tracing engine has evaluated your posterior mastery and recommends focusing on ${adaptiveRoadmap.recommended_next_concept.replace(/_/g, ' ')}.`
+                : isBrandNew
+                ? 'Master Dirac bra-ket notation and statevector normalization in Chapter 1 to earn your first verified cryptographic competence credential.'
+                : 'You have begun single-qubit rotations. Complete Hadamard worked examples to finalize your unitary gates certification.'}
+            </p>
           </div>
-
-          {/* 2. Concept Readiness Telemetry */}
-          <div className="space-y-3.5 pt-2 border-t border-purple-100/80">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-base font-bold font-orbitron text-[#1a052e] dark:text-white tracking-tight">Concept Telemetry</h3>
-              <span className="text-xs font-mono font-medium text-slate-400 uppercase">Live Mastery</span>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="flex justify-between font-medium">
-                  <span className="text-slate-700 dark:text-zinc-300">Linear Algebra & Dirac</span>
-                  <span className="font-orbitron text-emerald-600 font-semibold">94%</span>
-                </div>
-                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
-                  <div className="h-full rounded-full bg-emerald-500" style={{ width: '94%' }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between font-medium">
-                  <span className="text-slate-700 dark:text-zinc-300">Phase Gates & Rotations</span>
-                  <span className="font-orbitron text-[#4c1d70] dark:text-[#f5d626] font-semibold">78%</span>
-                </div>
-                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
-                  <div className="h-full rounded-full bg-[#4c1d70]" style={{ width: '78%' }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between font-medium">
-                  <span className="text-slate-700 dark:text-zinc-300">Quantum Entanglement</span>
-                  <span className="font-orbitron text-amber-600 font-semibold">40%</span>
-                </div>
-                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
-                  <div className="h-full rounded-full bg-amber-500" style={{ width: '40%' }} />
-                </div>
-              </div>
-            </div>
+          <div className="mt-6 flex gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                stateStore.setActiveLesson('ch-1', 't1-1');
+                onNavigate('lesson');
+              }}
+            >
+              Start Topic 1.1
+              <ArrowRightIcon className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('path')}>
+              View Roadmap
+            </Button>
           </div>
+        </Card>
 
-          {/* 3. Direct Lab Access (Hand-Crafted Clean Links - Zero Floating Card Box) */}
-          <div className="space-y-2 pt-2 border-t border-purple-100/80">
-            <div className="flex items-center gap-1.5 text-sm font-mono font-semibold text-purple-900">
-              <ZapIcon className="h-3.5 w-3.5 text-[#d8a800]" />
-              <span>Interactive Workspace</span>
-            </div>
-            
-            <div className="space-y-1 pt-1">
-              <button
-                type="button"
-                onClick={() => onNavigate('circuits')}
-                className="w-full text-left py-2 px-2.5 rounded-lg hover:bg-purple-50/60 transition flex items-center justify-between text-sm font-medium text-slate-700 hover:text-[#4c1d70] group"
+        <Card className="p-6">
+          <h3 className="font-display text-base font-bold text-zinc-900 dark:text-zinc-50">
+            Real Telemetry Snapshot
+          </h3>
+          <dl className="mt-4 space-y-3">
+            {[
+              { label: 'Active Study Time', value: `${(p.totalStudyMinutes / 60).toFixed(1)} hrs` },
+              { label: 'Assessment Accuracy', value: p.totalQuizAttempts > 0 ? `${accuracy}%` : 'No checks yet' },
+              { label: 'Consecutive Streak', value: `${p.streakDays} Days` },
+              { label: 'Verified Competency Points', value: `${p.totalXP} CP (Tier ${p.currentLevel})` }
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="flex items-baseline justify-between border-b border-zinc-100 pb-2.5 last:border-0 last:pb-0 dark:border-zinc-800"
               >
-                <span className="flex items-center gap-2">
-                  <CpuIcon className="h-3.5 w-3.5 text-[#4c1d70]" />
-                  <span>Open Circuit Builder</span>
-                </span>
-                <ArrowRightIcon className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#4c1d70] transition-transform group-hover:translate-x-0.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('courses')}
-                className="w-full text-left py-2 px-2.5 rounded-lg hover:bg-purple-50/60 transition flex items-center justify-between text-sm font-medium text-slate-700 hover:text-[#4c1d70] group"
-              >
-                <span className="flex items-center gap-2">
-                  <SparklesIcon className="h-3.5 w-3.5 text-[#d8a800]" />
-                  <span>Explore Quantum Tracks</span>
-                </span>
-                <ArrowRightIcon className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#4c1d70] transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </div>
-          </div>
-
-        </aside>
-
-      </div>
-
+                <dt className="text-xs text-zinc-600 dark:text-zinc-400">{stat.label}</dt>
+                <dd className="font-display text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                  {stat.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+      </section>
     </div>
   );
 }

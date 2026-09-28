@@ -1,4 +1,4 @@
-﻿// Web Audio Micro-Cue Engine for Quantum Computing Platform
+// Web Audio Micro-Cue Engine for Quantum Computing Platform
 // Authoritative implementation of Section 12.8 in agent.md:
 // - 0 KB external audio asset downloads (100% browser-synthesized)
 // - Gate snap clicks (440 -> 880 Hz sweep)
@@ -11,11 +11,11 @@
 
 class AudioEngine {
   private ctx: AudioContext | null = null;
-  private muted: boolean = false;
+  private muted = false;
   private binauralOscLeft: OscillatorNode | null = null;
   private binauralOscRight: OscillatorNode | null = null;
   private binauralGain: GainNode | null = null;
-  private isBinauralPlaying: boolean = false;
+  private isBinauralPlaying = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -251,7 +251,9 @@ class AudioEngine {
           this.binauralOscRight?.stop();
           this.binauralOscLeft?.disconnect();
           this.binauralOscRight?.disconnect();
-        } catch {}
+        } catch {
+          // ignore disconnect error on teardown
+        }
         this.binauralOscLeft = null;
         this.binauralOscRight = null;
         this.binauralGain = null;
