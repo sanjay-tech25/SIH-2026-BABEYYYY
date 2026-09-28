@@ -65,7 +65,7 @@ export class QuantumCodeGenerator {
     framework: QuantumFramework,
     numQubits: number,
     gates: CircuitGateInput[],
-    shots: number = 1024
+    shots = 1024
   ): string {
     const sortedGates = [...gates].sort((a, b) => (a.step ?? 0) - (b.step ?? 0));
 

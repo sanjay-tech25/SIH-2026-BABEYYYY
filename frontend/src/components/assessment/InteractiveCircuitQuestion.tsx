@@ -46,7 +46,7 @@ function simulateCircuit(numQubits: number, gates: CircuitGateSlot[]): Record<st
   } else {
     // 2-Qubits: [00, 01, 10, 11]
     // Initial state |00>
-    let state = [
+    const state = [
       { r: 1.0, i: 0.0 }, // 00
       { r: 0.0, i: 0.0 }, // 01
       { r: 0.0, i: 0.0 }, // 10

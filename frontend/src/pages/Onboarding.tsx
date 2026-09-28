@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { apiClient } from '../services/apiClient';
 import type { ViewId } from '../data/appData';
 
 type OnboardingProps = {
@@ -36,9 +37,22 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
     { num: 5, title: 'Time', icon: ClockIcon },
   ];
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     localStorage.setItem('qubot_onboarding_completed', 'true');
     localStorage.setItem('qubot_learner_name', name);
+    localStorage.setItem('qubot_age_tier', ageCategory);
+    try {
+      await apiClient.sendQubotEvent('ONBOARDING_COMPLETED', {
+        name,
+        ageBracket: ageCategory,
+        goal,
+        level,
+        preference,
+        dailyMinutes
+      });
+    } catch {
+      // safe fallback
+    }
     onComplete();
   };
 

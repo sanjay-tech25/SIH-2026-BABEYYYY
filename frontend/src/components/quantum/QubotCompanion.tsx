@@ -24,6 +24,7 @@ import type { ViewId } from '../../data/appData';
 import { GeniePresence } from '../ui/GenieMotion';
 import { audioEngine } from '../../services/audioEngine';
 import { stateStore } from '../../services/stateStore';
+import { apiClient } from '../../services/apiClient';
 
 export type CanonicalState =
   | 'IDLE'
@@ -193,6 +194,16 @@ export function QubotCompanion({ onNavigate, externalState, externalEmotion }: Q
   const [xpAwardNotification, setXpAwardNotification] = useState<string | null>(null);
   const [lastTapTime, setLastTapTime] = useState(0);
 
+  // Fetch authoritative mascot state from backend
+  useEffect(() => {
+    apiClient.getQubotState().then((res) => {
+      if (res && res.state) {
+        setCanonicalState(res.state as CanonicalState);
+        if (res.emotion) setEmotion(res.emotion as EmotionState);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Sync external state changes if passed from parent
   useEffect(() => {
     if (externalState) {
@@ -244,6 +255,7 @@ export function QubotCompanion({ onNavigate, externalState, externalEmotion }: Q
     setEmotion('PROUD');
     stateStore.awardFocusXP(40, 'Pomodoro Deep Focus Block Completed');
     triggerXpToast('+40 XP Earned! 25-Min Deep Focus Block Complete');
+    apiClient.sendQubotEvent('FOCUS_INTERVAL_COMPLETED', { duration_minutes: 25 }).catch(() => {});
   };
 
   const handleRestComplete = () => {
@@ -253,6 +265,7 @@ export function QubotCompanion({ onNavigate, externalState, externalEmotion }: Q
     setEmotion('JOYFUL');
     stateStore.awardFocusXP(15, 'Restorative Quantum Coherence Break');
     triggerXpToast('+15 XP Earned! Coherence Restored');
+    apiClient.sendQubotEvent('REST_COMPLETED', { duration_minutes: 5 }).catch(() => {});
   };
 
   const triggerXpToast = (msg: string) => {

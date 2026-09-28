@@ -6,7 +6,7 @@ export interface Complex {
   i: number;
 }
 
-const c = (r: number, i: number = 0): Complex => ({ r, i });
+const c = (r: number, i = 0): Complex => ({ r, i });
 const add = (a: Complex, b: Complex): Complex => ({ r: a.r + b.r, i: a.i + b.i });
 const mul = (a: Complex, b: Complex): Complex => ({
   r: a.r * b.r - a.i * b.i,
