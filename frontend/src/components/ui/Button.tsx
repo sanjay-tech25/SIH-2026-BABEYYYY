@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'accent';
 
 type ButtonProps = {
   children: React.ReactNode;
@@ -13,14 +13,16 @@ type ButtonProps = {
 };
 
 const base =
-'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 text-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-zinc-950';
+  'inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4c1d70] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] cursor-pointer';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700',
+  primary: 'bg-[#4c1d70] text-white hover:bg-[#391555] shadow-sm hover:shadow',
   secondary:
-  'border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
+    'border border-[#cbb3d8] bg-white text-slate-800 hover:bg-purple-50 hover:text-[#4c1d70] hover:border-[#4c1d70] shadow-sm dark:border-purple-900/40 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
   ghost:
-  'text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-600/10'
+    'text-[#4c1d70] hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/30',
+  accent:
+    'bg-[#f5d626] text-zinc-950 font-bold hover:bg-[#ebd024] shadow-sm hover:shadow'
 };
 
 export function Button({
@@ -37,10 +39,10 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${base} ${variants[variant]} ${className}`}
-      aria-label={rest['aria-label']}>
-      
+      className={`genie-control ${base} ${variants[variant]} ${className}`}
+      aria-label={rest['aria-label']}
+    >
       {children}
-    </button>);
-
+    </button>
+  );
 }

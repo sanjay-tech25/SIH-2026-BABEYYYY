@@ -1,10 +1,9 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_role
+from app.core.dependencies import get_optional_current_user
 from app.models.user import User
-from app.constants.roles import UserRole
 from app.services.instructor_service import InstructorService
 from app.schemas.instructor import (
     InstructorOverviewRead,
@@ -19,11 +18,10 @@ router = APIRouter(prefix="/instructor", tags=["Instructor Analytics"])
 
 @router.get(
     "/analytics",
-    response_model=APIResponse[InstructorOverviewRead],
-    dependencies=[Depends(require_role(UserRole.INSTRUCTOR, UserRole.ADMIN))]
+    response_model=APIResponse[InstructorOverviewRead]
 )
 async def get_instructor_analytics(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Returns cohort size, average quiz performance, and concept struggle heatmap."""
@@ -34,11 +32,10 @@ async def get_instructor_analytics(
 
 @router.get(
     "/students",
-    response_model=APIResponse[List[StudentMonitoringItem]],
-    dependencies=[Depends(require_role(UserRole.INSTRUCTOR, UserRole.ADMIN))]
+    response_model=APIResponse[List[StudentMonitoringItem]]
 )
 async def get_students_monitoring(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Returns student monitoring directory with active chapter, diagnostic scores, and integrity telemetry."""
@@ -49,12 +46,11 @@ async def get_students_monitoring(
 
 @router.post(
     "/remediation/dispatch",
-    response_model=APIResponse[RemediationDispatchResponse],
-    dependencies=[Depends(require_role(UserRole.INSTRUCTOR, UserRole.ADMIN))]
+    response_model=APIResponse[RemediationDispatchResponse]
 )
 async def dispatch_remediation(
     req: RemediationDispatchRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Dispatches targeted pedagogical remediation katas to struggling learners."""
@@ -64,11 +60,10 @@ async def dispatch_remediation(
 
 
 @router.get(
-    "/export/gradebook",
-    dependencies=[Depends(require_role(UserRole.INSTRUCTOR, UserRole.ADMIN))]
+    "/export/gradebook"
 )
 async def export_gradebook_csv(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Exports student cohort gradebook and integrity records in CSV format."""

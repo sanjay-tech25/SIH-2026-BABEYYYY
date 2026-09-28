@@ -9,11 +9,11 @@ type PageHeaderProps = {
 export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="max-w-xl">
-        <h1 className="font-display text-h1 font-semibold text-zinc-900 dark:text-zinc-50">
+      <div className="max-w-2xl">
+        <h1 className="font-display text-h1 font-bold text-zinc-950 dark:text-zinc-50">
           {title}
         </h1>
-        <p className="mt-2 text-body text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+        <p className="mt-2 text-body text-zinc-700 dark:text-zinc-300 leading-relaxed">{subtitle}</p>
       </div>
       {action}
     </header>);

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { XIcon, LockIcon, MailIcon, UserIcon, ArrowRightIcon } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { apiClient } from '../services/apiClient';
+import { useGeniePresence } from './ui/useGenieMotion';
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -19,7 +20,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  const { present, ref, motionProps } = useGeniePresence(isOpen, { origin: 'bottom', captureTrigger: true });
+  useEffect(() => {
+    if (!isOpen) return;
+    ref.current?.querySelector('button')?.focus({ preventScroll: true });
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [isOpen, ref]);
+  if (!present) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +52,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}>
+      <div ref={ref} {...motionProps} role="dialog" aria-modal="true" aria-label={mode === 'login' ? 'Sign in' : 'Create account'} onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]'));
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }} className="genie-surface w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <Card className="border-zinc-800 bg-zinc-900 p-6 text-zinc-100 shadow-2xl">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
             <div className="flex items-center gap-2">
@@ -58,6 +74,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close sign in"
               className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white"
             >
               <XIcon className="h-5 w-5" />
@@ -70,7 +87,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <form key={mode} onSubmit={handleSubmit} className="genie-content mt-4 space-y-4">
             {mode === 'signup' && (
               <div>
                 <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400">

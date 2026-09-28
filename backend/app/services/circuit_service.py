@@ -93,13 +93,17 @@ class CircuitService:
             )
             await self.circuit_repo.create_execution(execution)
 
-        # Award Quantum Lab XP
-        await self.progress_repo.add_xp_transaction(
-            user_id=user_id,
-            amount=60,
-            source_type="CIRCUIT_EXECUTED",
-            description=f"Executed quantum circuit on {sim_result.get('framework', framework)} ({sim_result['shots']} shots)"
-        )
+        # Award Quantum Lab XP if authenticated user
+        if user_id and user_id != "guest_user":
+            try:
+                await self.progress_repo.add_xp_transaction(
+                    user_id=user_id,
+                    amount=60,
+                    source_type="CIRCUIT_EXECUTED",
+                    description=f"Executed quantum circuit on {sim_result.get('framework', framework)} ({sim_result['shots']} shots)"
+                )
+            except Exception:
+                pass
 
         bloch_reads = [
             BlochVectorRead(

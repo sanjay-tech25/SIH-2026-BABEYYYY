@@ -1,7 +1,8 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_optional_current_user
 from app.models.user import User
 from app.schemas.qubot_v2 import (
     QubotResponseEnvelope,
@@ -20,18 +21,23 @@ router = APIRouter(prefix="/qubot", tags=["QUBOT Operations"])
 
 @router.get("/state", response_model=APIResponse[QubotResponseEnvelope])
 async def get_qubot_state(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """GET /api/v1/qubot/state - Returns current Qubot state snapshot for the active learner."""
-    user_repo = UserRepository(db)
-    full_user = await user_repo.get_full_user(current_user.id)
-    age_bracket = full_user.profile.age_bracket if (full_user and full_user.profile) else "STUDENT"
+    user_id = current_user.id if current_user else "guest_user"
+    age_bracket = "STUDENT"
+    if current_user:
+        user_repo = UserRepository(db)
+        full_user = await user_repo.get_full_user(current_user.id)
+        if full_user and full_user.profile and full_user.profile.age_bracket:
+            age_bracket = full_user.profile.age_bracket
+
     envelope = QUBOTDecisionEngine.evaluate_envelope(
-        user_id=current_user.id,
+        user_id=user_id,
         event_type="SESSION_RESUMED",
         age_bracket=age_bracket,
-        metadata={"user_id": current_user.id}
+        metadata={"user_id": user_id}
     )
     return APIResponse(data=envelope, message="Current Qubot state retrieved")
 
@@ -39,23 +45,28 @@ async def get_qubot_state(
 @router.post("/events", response_model=APIResponse[QubotResponseEnvelope])
 async def process_qubot_event(
     event: QubotEventEnvelope,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """POST /api/v1/qubot/events - Ingests a normalized learner event envelope."""
-    user_repo = UserRepository(db)
-    full_user = await user_repo.get_full_user(current_user.id)
-    age_bracket = full_user.profile.age_bracket if (full_user and full_user.profile) else "STUDENT"
+    user_id = current_user.id if current_user else "guest_user"
+    age_bracket = "STUDENT"
+    if current_user:
+        user_repo = UserRepository(db)
+        full_user = await user_repo.get_full_user(current_user.id)
+        if full_user and full_user.profile and full_user.profile.age_bracket:
+            age_bracket = full_user.profile.age_bracket
+
     meta = event.payload.copy()
     meta.update({
         "lesson_id": event.lesson_id,
         "question_id": event.question_id,
         "session_id": event.session_id,
-        "user_id": current_user.id,
+        "user_id": user_id,
     })
 
     envelope = QUBOTDecisionEngine.evaluate_envelope(
-        user_id=current_user.id,
+        user_id=user_id,
         event_type=event.event_type,
         age_bracket=age_bracket,
         metadata=meta
@@ -66,18 +77,23 @@ async def process_qubot_event(
 @router.post("/interactions", response_model=APIResponse[QubotResponseEnvelope])
 async def handle_qubot_interaction(
     req: QubotInteractionRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """POST /api/v1/qubot/interactions - Handles explicit learner interactions with Qubot."""
-    user_repo = UserRepository(db)
-    full_user = await user_repo.get_full_user(current_user.id)
-    age_bracket = full_user.profile.age_bracket if (full_user and full_user.profile) else "STUDENT"
+    user_id = current_user.id if current_user else "guest_user"
+    age_bracket = "STUDENT"
+    if current_user:
+        user_repo = UserRepository(db)
+        full_user = await user_repo.get_full_user(current_user.id)
+        if full_user and full_user.profile and full_user.profile.age_bracket:
+            age_bracket = full_user.profile.age_bracket
+
     meta = req.context.copy()
     meta["interaction"] = req.interaction
 
     envelope = QUBOTDecisionEngine.evaluate_envelope(
-        user_id=current_user.id,
+        user_id=user_id,
         event_type=f"QUBOT_INTERACTION_{req.interaction}",
         age_bracket=age_bracket,
         metadata=meta
@@ -87,7 +103,7 @@ async def handle_qubot_interaction(
 
 @router.get("/session", response_model=APIResponse[QubotSessionPayload])
 async def get_qubot_session(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """GET /api/v1/qubot/session - Retrieves active session and Pomodoro state."""

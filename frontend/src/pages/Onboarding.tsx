@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { apiClient } from '../services/apiClient';
 import type { ViewId } from '../data/appData';
 
 type OnboardingProps = {
@@ -36,26 +37,39 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
     { num: 5, title: 'Time', icon: ClockIcon },
   ];
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     localStorage.setItem('qubot_onboarding_completed', 'true');
     localStorage.setItem('qubot_learner_name', name);
+    localStorage.setItem('qubot_age_tier', ageCategory);
+    try {
+      await apiClient.sendQubotEvent('ONBOARDING_COMPLETED', {
+        name,
+        ageBracket: ageCategory,
+        goal,
+        level,
+        preference,
+        dailyMinutes
+      });
+    } catch {
+      // safe fallback
+    }
     onComplete();
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-zinc-950 px-6 py-12 text-zinc-100">
+    <div className="genie-page flex min-h-screen flex-col justify-center bg-zinc-950 px-6 py-12 text-zinc-100">
       <div className="mx-auto w-full max-w-xl">
         {/* Stepper Navigation */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-display text-xs font-bold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-display text-sm font-bold text-white">
               QB
             </span>
-            <span className="font-display text-sm font-semibold tracking-tight text-zinc-300">
+            <span className="font-display text-base font-semibold tracking-tight text-zinc-300">
               Personalized Setup
             </span>
           </div>
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-sm font-medium text-zinc-400">
             Step {step} of 5
           </span>
         </div>
@@ -69,15 +83,16 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
         </div>
 
         <Card className="border-zinc-800 bg-zinc-900 p-8 shadow-xl">
+          <div key={step} className="genie-content">
           {/* Step 1: About You */}
           {step === 1 && (
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Let's personalize your experience</h2>
-              <p className="mt-2 text-sm text-zinc-400">Tell us how you'd like to be addressed and your learner tier.</p>
+              <h2 className="font-display text-3xl font-bold text-white">Let's personalize your experience</h2>
+              <p className="mt-2 text-base text-zinc-400">Tell us how you'd like to be addressed and your learner tier.</p>
               
               <div className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400">
+                  <label className="block text-sm font-medium uppercase tracking-wider text-zinc-400">
                     Your Name or Handle
                   </label>
                   <input
@@ -85,12 +100,12 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name"
-                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none"
+                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400">
+                  <label className="block text-sm font-medium uppercase tracking-wider text-zinc-400">
                     Learner Category
                   </label>
                   <div className="mt-2 grid grid-cols-3 gap-3">
@@ -109,8 +124,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
                             : 'border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700'
                         }`}
                       >
-                        <p className="text-xs font-semibold text-zinc-200">{t.label}</p>
-                        <p className="mt-1 text-[11px] text-zinc-400">{t.desc}</p>
+                        <p className="text-sm font-semibold text-zinc-200">{t.label}</p>
+                        <p className="mt-1 text-[13px] text-zinc-400">{t.desc}</p>
                       </button>
                     ))}
                   </div>
@@ -122,8 +137,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
           {/* Step 2: Learning Goal */}
           {step === 2 && (
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">What is your primary focus?</h2>
-              <p className="mt-2 text-sm text-zinc-400">QUBOT will optimize the initial prerequisite tree accordingly.</p>
+              <h2 className="font-display text-3xl font-bold text-white">What is your primary focus?</h2>
+              <p className="mt-2 text-base text-zinc-400">QUBOT will optimize the initial prerequisite tree accordingly.</p>
 
               <div className="mt-6 space-y-3">
                 {[
@@ -143,8 +158,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
                     }`}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-white">{item.title}</p>
-                      <p className="text-xs text-zinc-400">{item.desc}</p>
+                      <p className="text-base font-semibold text-white">{item.title}</p>
+                      <p className="text-sm text-zinc-400">{item.desc}</p>
                     </div>
                     {goal === item.id && <CheckIcon className="h-4 w-4 text-emerald-400" />}
                   </button>
@@ -156,8 +171,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
           {/* Step 3: Experience Level */}
           {step === 3 && (
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">What is your current background?</h2>
-              <p className="mt-2 text-sm text-zinc-400">We will adjust where your learning path begins.</p>
+              <h2 className="font-display text-3xl font-bold text-white">What is your current background?</h2>
+              <p className="mt-2 text-base text-zinc-400">We will adjust where your learning path begins.</p>
 
               <div className="mt-6 space-y-3">
                 {[
@@ -176,8 +191,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
                     }`}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-white">{item.title}</p>
-                      <p className="text-xs text-zinc-400">{item.desc}</p>
+                      <p className="text-base font-semibold text-white">{item.title}</p>
+                      <p className="text-sm text-zinc-400">{item.desc}</p>
                     </div>
                     {level === item.id && <CheckIcon className="h-4 w-4 text-emerald-400" />}
                   </button>
@@ -189,8 +204,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
           {/* Step 4: Learning Preference */}
           {step === 4 && (
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">How do you learn best?</h2>
-              <p className="mt-2 text-sm text-zinc-400">The lesson viewer will emphasize your preferred content type.</p>
+              <h2 className="font-display text-3xl font-bold text-white">How do you learn best?</h2>
+              <p className="mt-2 text-base text-zinc-400">The lesson viewer will emphasize your preferred content type.</p>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
                 {[
@@ -209,8 +224,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
                         : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700'
                     }`}
                   >
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
-                    <p className="mt-1 text-xs text-zinc-400">{item.desc}</p>
+                    <p className="text-base font-semibold text-white">{item.title}</p>
+                    <p className="mt-1 text-sm text-zinc-400">{item.desc}</p>
                   </button>
                 ))}
               </div>
@@ -220,8 +235,8 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
           {/* Step 5: Daily Time Availability */}
           {step === 5 && (
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Daily Learning Target</h2>
-              <p className="mt-2 text-sm text-zinc-400">Set a realistic pace for your daily plan.</p>
+              <h2 className="font-display text-3xl font-bold text-white">Daily Learning Target</h2>
+              <p className="mt-2 text-base text-zinc-400">Set a realistic pace for your daily plan.</p>
 
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {[15, 30, 45, 60].map((mins) => (
@@ -235,31 +250,32 @@ export function Onboarding({ onComplete, onNavigate }: OnboardingProps) {
                         : 'border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700'
                     }`}
                   >
-                    <p className="font-display text-2xl font-bold text-white">{mins}</p>
-                    <p className="text-xs text-zinc-400">minutes/day</p>
+                    <p className="font-display text-3xl font-bold text-white">{mins}</p>
+                    <p className="text-sm text-zinc-400">minutes/day</p>
                   </button>
                 ))}
               </div>
 
               <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                <div className="flex items-center gap-2 text-xs font-medium text-emerald-400">
+                <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
                   <SparklesIcon className="h-4 w-4" />
                   Your Customized Starting Path is Ready
                 </div>
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-sm text-zinc-400">
                   Based on your preferences, we've loaded the <strong>Quantum Foundations</strong> curriculum with an estimated 3-week completion timeline.
                 </p>
               </div>
             </div>
           )}
 
+          </div>
           {/* Stepper Footer Controls */}
           <div className="mt-8 flex items-center justify-between border-t border-zinc-800 pt-5">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep((s) => s - 1)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-base font-medium text-zinc-400 hover:text-white"
               >
                 <ArrowLeftIcon className="h-4 w-4" />
                 Back

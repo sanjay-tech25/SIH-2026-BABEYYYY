@@ -56,47 +56,55 @@ Support:
 
 ---
 
-# 2. Application Shell
+# 2. Application Shell & Navigation Architecture
 
-The application shell is shared across authenticated pages.
+The application shell uses a high-tech **FSE Computing Floating Capsule Navbar** across all authenticated and internal platform views, eliminating legacy left sidebar constraints in favor of an expansive, full-width workspace.
 
-## Desktop
+## 2.1 Floating Capsule Navbar (`Navbar.tsx`)
 
-### Sidebar
-Contains:
-- Dashboard
-- Learn
-- Roadmap / Learning Path
-- Practice
-- Progress
-- Achievements
-- Settings
+### Position & Appearance
+- Fixed floating pill capsule (`fixed top-4 inset-x-0 z-50`)
+- Frosted glass backdrop blur (`backdrop-blur-xl`, `border border-purple-300/30`, `bg-[#1e0a2e]/92` with dark mode support)
+- Deep royal plum glow and subtle drop shadow (`shadow-[0_10px_35px_rgba(76,29,112,0.35)]`)
 
-### Top Bar
-Contains:
-- Page title / breadcrumb
-- Search
-- Notifications
-- Profile
-- Optional contextual action
+### Brand Emblem & Identity
+- Luminous concentric qubit orb with pulsing canary gold (`#f5d626`) core and radial ping wave
+- Futuristic brand typography: `EGREEN QUANTA` (Orbitron font) and `AI & QUANTUM ECOSYSTEM` (monospace subtext)
 
-### Main Content
-Uses a responsive max-width container with flexible columns.
+### Horizontal Desktop Navigation (Pill Capsules)
+1. **Today** (`dashboard`)
+2. **Courses** (`courses`)
+3. **Learning Path** (`path`)
+4. **Circuit Studio** (`circuits`)
+5. **Open Lab** (`openlab`)
+6. **Assessments** (`assessments`)
+7. **AI Tutor** (`tutor`)
+8. **Progress** (`progress`)
+9. **Milestones** (`achievements`)
+10. **Settings** (`settings`)
 
-- Floating companion
-- Inline learning assistant
-- Empty-state guide
-- Progress celebration
-- Focus reminder
+Active state is highlighted with a frosted pill capsule (`bg-white/20 text-[#f5d626] font-semibold`) and a live canary gold pulse dot.
 
-## Mobile
+### Telemetry, Utilities & Actions
+- **Level & XP Badge**: `Level {learner.level} ({learner.xp} XP)` in rounded pill capsule
+- **Streak Counter**: `🔥 {learner.streakDays}d streak` in amber pill capsule with Orbitron bold counter
+- **Theme Switcher**: Instant one-click toggle between Dark Mode and Light Mode
+- **Notification Center**: Bell icon with unread badge and floating dropdown card
+- **Platform Overview**: Quick-return button to public landing page (`Overview ➔`)
 
-Use:
-- Compact top bar
-- Bottom navigation or collapsible navigation
-- Stacked cards
-- Full-width content
-- Bottom sheets for secondary actions
+### Mobile & Tablet Experience
+- Collapses into a floating hamburger toggle
+- Expands into a full-fidelity frosted glass modal drawer containing all 10 module links, level status, streak telemetry, and quick navigation
+
+## 2.2 Full-Width Workspace Canvas
+- Eliminates the legacy fixed left sidebar (`Sidebar.tsx`) to provide an expansive, distraction-free horizontal canvas (`max-w-7xl` container)
+- Dedicated top clearance (`pt-28`) ensures content smoothly scrolls beneath the floating capsule navbar
+- Employs an unboxed editorial layout with hairline dividers and zero card fatigue
+
+## 2.3 Typography Dual-System
+- **Headlines, Telemetry & CTA Triggers**: Google Fonts `Orbitron` (`font-orbitron`)
+- **Body Copy, Scientific Explanations & Labels**: Google Fonts `Poppins` (`font-poppins`)
+- **Code, Quantum Dirac Notation & Matrix Values**: `font-mono`
 
 ---
 
@@ -684,13 +692,12 @@ Core reusable components:
 
 ### Layout
 - AppShell
-- Sidebar
-- TopBar
+- Navbar (Floating Frosted Capsule)
 - BottomNavigation
 - PageContainer
 
 ### Navigation
-- NavItem
+- NavItem (Pill Capsule with Canary Gold Indicator)
 - Breadcrumb
 - Tabs
 - Stepper
@@ -752,7 +759,7 @@ Use an appropriate server-state/data-fetching layer.
 
 ## Client State
 Examples:
-- Sidebar state
+- Mobile Navbar drawer state
 - Modal state
 - Timer state
 - Temporary UI preferences
@@ -849,8 +856,7 @@ frontend/
 │   │   │   └── Tabs.*
 │   │   │
 │   │   ├── navigation/
-│   │   │   ├── Sidebar.*
-│   │   │   ├── TopBar.*
+│   │   │   ├── Navbar.*
 │   │   │   ├── BottomNavigation.*
 │   │   │   ├── NavItem.*
 │   │   │   └── Breadcrumb.*

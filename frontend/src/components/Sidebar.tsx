@@ -1,42 +1,38 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import {
   LayoutGridIcon,
   BookOpenIcon,
   RouteIcon,
   ClipboardCheckIcon,
+  MessageSquareIcon,
   TrendingUpIcon,
   MedalIcon,
   CpuIcon,
   FlaskConicalIcon,
   SettingsIcon,
-  LogOutIcon,
-  XIcon,
   UserIcon,
-  GraduationCapIcon
+  LogOutIcon,
+  HomeIcon,
+  XIcon
 } from 'lucide-react';
 import { ProgressBar } from './ui/ProgressBar';
-import type { NavId } from '../data/appData';
-import { stateStore, type AppState } from '../services/stateStore';
+import { learner, type NavId } from '../data/appData';
 
 type NavItem = {
   id: NavId;
   label: string;
   icon: typeof LayoutGridIcon;
-  badge?: string;
 };
 
-// Streamlined navigation WITHOUT the unwanted "Ask the tutor" tab
 const navItems: NavItem[] = [
-  { id: 'path', label: 'Curriculum Journey', icon: RouteIcon, badge: 'Start' },
-  { id: 'courses', label: 'Course Syllabus', icon: BookOpenIcon },
-  { id: 'openlab', label: 'Open Lab Hub', icon: FlaskConicalIcon },
-  { id: 'circuits', label: 'Circuit Studio', icon: CpuIcon },
-  { id: 'dashboard', label: 'Today’s Hub', icon: LayoutGridIcon },
-  { id: 'assessments', label: 'Skill Practice', icon: ClipboardCheckIcon },
-  { id: 'progress', label: 'Real Progress', icon: TrendingUpIcon },
+  { id: 'dashboard', label: 'Today', icon: LayoutGridIcon },
+  { id: 'courses', label: 'Courses', icon: BookOpenIcon },
+  { id: 'path', label: 'Learning path', icon: RouteIcon },
+  { id: 'circuits', label: 'Circuit builder', icon: CpuIcon },
+  { id: 'openlab', label: 'Open Lab (Colab)', icon: FlaskConicalIcon },
+  { id: 'assessments', label: 'Assessments', icon: ClipboardCheckIcon },
+  { id: 'progress', label: 'Progress', icon: TrendingUpIcon },
   { id: 'achievements', label: 'Milestones', icon: MedalIcon },
-  { id: 'profile', label: 'User Profile', icon: UserIcon },
-  { id: 'instructor', label: 'Instructor Panel', icon: GraduationCapIcon, badge: 'Faculty' },
   { id: 'settings', label: 'Settings', icon: SettingsIcon }
 ];
 
@@ -48,33 +44,23 @@ type SidebarProps = {
 };
 
 export function Sidebar({ current, onNavigate, onLogout, onClose }: SidebarProps) {
-  const [appState, setAppState] = useState<AppState>(stateStore.getState());
-
-  useEffect(() => {
-    return stateStore.subscribe(setAppState);
-  }, []);
-
-  const p = appState.progress;
-  const xpTarget = p.currentLevel * 350;
-  const xpPercent = Math.min(100, Math.round((p.totalXP / xpTarget) * 100));
+  const xpPercent = (learner.xp / learner.xpTarget) * 100;
 
   return (
-    <div className="flex h-full flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Brand Header */}
-      <div className="flex items-center justify-between px-5 pb-4 pt-6">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('path')}>
-          <span
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 font-display text-sm font-bold text-white shadow-sm"
-            aria-hidden="true"
-          >
-            QB
-          </span>
+    <div className="flex h-full flex-col border-r border-slate-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between px-5 pb-5 pt-6">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('dashboard')}>
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-purple-950 border border-[#f5d626]/50 shadow-[0_0_12px_rgba(245,214,38,0.3)] shrink-0">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f5d626] animate-pulse" />
+            <div className="absolute inset-0 rounded-full border border-[#f5d626]/30 animate-ping opacity-30" />
+          </div>
           <div>
-            <span className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              QUBOT
-            </span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Quantum Learning
+            <div className="font-orbitron text-sm font-bold tracking-wider leading-none">
+              <span className="text-[#3b1458] dark:text-white">EGREEN </span>
+              <span className="text-[#f5d626]">QUANTA</span>
+            </div>
+            <span className="block mt-1 text-[9px] font-mono font-bold tracking-widest text-[#4c1d70] dark:text-purple-300 uppercase">
+              QUBOT v2.0 • ECOSYSTEM
             </span>
           </div>
         </div>
@@ -90,25 +76,18 @@ export function Sidebar({ current, onNavigate, onLogout, onClose }: SidebarProps
         )}
       </div>
 
-      {/* Live Learner Level & Competency Points Card */}
-      <div className="px-4 py-2">
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 dark:border-zinc-800 dark:bg-zinc-950/40">
+      <div className="px-5 py-3">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-purple-900/40 dark:bg-purple-950/20">
           <div className="flex items-center justify-between text-xs">
-            <div>
-              <span className="font-bold text-zinc-900 dark:text-zinc-100">{appState.user.name}</span>
-              <span className="ml-1 text-[10px] text-emerald-600 font-semibold">· Tier {p.currentLevel}</span>
-            </div>
-            <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px]" title="Competency Points">
-              {p.totalXP} CP
-            </span>
+            <span className="font-orbitron font-bold text-[#3b1458] dark:text-purple-200">Level {learner.level}</span>
+            <span className="font-orbitron text-[11px] text-zinc-500 dark:text-zinc-400">{learner.xp} / {learner.xpTarget} XP</span>
           </div>
-          <ProgressBar value={xpPercent} label="Competency progress" className="mt-2" />
+          <ProgressBar value={xpPercent} label="XP progress" className="mt-2" />
         </div>
       </div>
 
-      {/* Main Navigation List */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Main navigation">
-        <ul className="space-y-1">
+      <nav className="flex-1 overflow-y-auto px-3 py-1.5 no-scrollbar" aria-label="Main navigation">
+        <ul className="space-y-0.5">
           {navItems.map((item) => {
             const active = item.id === current;
             const Icon = item.icon;
@@ -118,21 +97,15 @@ export function Sidebar({ current, onNavigate, onLogout, onClose }: SidebarProps
                   type="button"
                   onClick={() => onNavigate(item.id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex min-h-[44px] w-full items-center justify-between rounded-xl px-3.5 text-xs font-semibold transition-colors ${
+                  className={`flex min-h-[38px] w-full items-center gap-3 rounded-full px-4 py-2 text-xs font-poppins font-medium transition-all duration-200 ease-out hover:translate-x-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 ${
                     active
-                      ? 'bg-emerald-600 font-bold text-white shadow-sm'
-                      : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100'
+                      ? 'bg-[#4c1d70] font-semibold text-white shadow-md shadow-purple-950/20'
+                      : 'text-zinc-600 hover:bg-purple-50 hover:text-[#4c1d70] dark:text-zinc-300 dark:hover:bg-zinc-800/70'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-white' : 'text-zinc-400'}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && !active && (
-                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                      {item.badge}
-                    </span>
-                  )}
+                  <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? 'text-[#f5d626]' : ''}`} aria-hidden="true" />
+                  <span className="truncate flex-1 text-left">{item.label}</span>
+                  {active && <span className="h-1.5 w-1.5 rounded-full bg-[#f5d626] animate-pulse" />}
                 </button>
               </li>
             );
@@ -140,39 +113,29 @@ export function Sidebar({ current, onNavigate, onLogout, onClose }: SidebarProps
         </ul>
       </nav>
 
-      {/* Footer Profile & Logout */}
-      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
-        <div className="flex items-center justify-between rounded-xl p-2">
-          <div
-            onClick={() => onNavigate('profile')}
-            className="flex items-center gap-2.5 truncate cursor-pointer rounded-lg hover:bg-zinc-100 p-1 -m-1 transition dark:hover:bg-zinc-800 flex-1 mr-2"
-            title="Open User Profile"
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-xs font-bold text-white shadow-sm">
-              {appState.user.name.substring(0, 2).toUpperCase()}
-            </span>
-            <div className="truncate">
-              <p className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                {appState.user.name}
-              </p>
-              <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
-                {appState.user.role === 'INSTRUCTOR' ? 'Faculty Panel' : `${appState.user.ageTier} Tier`}
-              </p>
-            </div>
-          </div>
-
-          {onLogout && (
+      <div className="border-t border-slate-200/80 px-3 py-2.5 dark:border-zinc-800">
+        <ul className="space-y-0.5">
+          <li>
+            <button
+              type="button"
+              onClick={() => onNavigate('settings')}
+              className="flex min-h-[38px] w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-all duration-200 ease-out hover:translate-x-0.5"
+            >
+              <UserIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+              <span>Learner Profile</span>
+            </button>
+          </li>
+          <li>
             <button
               type="button"
               onClick={onLogout}
-              title="Sign out"
-              aria-label="Sign out"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              className="flex min-h-[38px] w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-all duration-200 ease-out hover:translate-x-0.5"
             >
-              <LogOutIcon className="h-4 w-4" />
+              <LogOutIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+              <span>Exit to Overview</span>
             </button>
-          )}
-        </div>
+          </li>
+        </ul>
       </div>
     </div>
   );

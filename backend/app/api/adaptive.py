@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_optional_current_user
 from app.models.user import User
 from app.repositories.mastery_repository import MasteryRepository
 from app.repositories.progress_repository import ProgressRepository
@@ -72,16 +72,19 @@ CANONICAL_PREREQUISITES = [
 
 @router.get("/roadmap", response_model=APIResponse[AdaptiveRoadmapRead])
 async def get_adaptive_roadmap(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Returns the authoritative adaptive roadmap showing mastered, unlocked, and strictly locked nodes."""
-    mastery_repo = MasteryRepository(db)
-    masteries = await mastery_repo.get_all_user_masteries(current_user.id)
-
-    mastered_set = {
-        m.concept_id for m in masteries if (m.mastery_score or 0) >= 0.70
-    }
+    mastered_set = set()
+    if current_user:
+        mastery_repo = MasteryRepository(db)
+        masteries = await mastery_repo.get_all_user_masteries(current_user.id)
+        mastered_set = {
+            m.concept_id for m in masteries if (m.mastery_score or 0) >= 0.70
+        }
+    else:
+        mastered_set = {"math_foundations"}
 
     path_data = LearningEngine.get_adaptive_learning_path(
         all_concepts=CANONICAL_CONCEPTS,
@@ -110,31 +113,33 @@ async def get_adaptive_roadmap(
 @router.post("/advance", response_model=APIResponse[dict])
 async def advance_adaptively(
     req: AdaptiveAdvanceRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Enforces strict prerequisite mastery check before allowing the user to advance."""
-    mastery_repo = MasteryRepository(db)
-    progress_repo = ProgressRepository(db)
-
-    # Check if user has mastered the prerequisite concept
     concept = req.concept_id or "math_foundations"
-    user_mastery = await mastery_repo.get_user_mastery_by_concept(current_user.id, concept)
-    mastery_score = user_mastery.mastery_score if user_mastery else 0.0
 
-    if mastery_score < 0.70 and concept != "math_foundations":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Advancement blocked: Compulsory prerequisite remediation required for {concept}. Current mastery is {int(mastery_score * 100)}% (70% required)."
+    if current_user:
+        mastery_repo = MasteryRepository(db)
+        progress_repo = ProgressRepository(db)
+
+        # Check if user has mastered the prerequisite concept
+        user_mastery = await mastery_repo.get_user_mastery_by_concept(current_user.id, concept)
+        mastery_score = user_mastery.mastery_score if user_mastery else 0.0
+
+        if mastery_score < 0.70 and concept != "math_foundations":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Advancement blocked: Compulsory prerequisite remediation required for {concept}. Current mastery is {int(mastery_score * 100)}% (70% required)."
+            )
+
+        await progress_repo.add_xp_transaction(
+            user_id=current_user.id,
+            amount=30,
+            source_type="ADAPTIVE_ADVANCE",
+            description=f"Verified advancement to {req.target_topic_id or concept}"
         )
-
-    await progress_repo.add_xp_transaction(
-        user_id=current_user.id,
-        amount=30,
-        source_type="ADAPTIVE_ADVANCE",
-        description=f"Verified advancement to {req.target_topic_id or concept}"
-    )
-    await db.commit()
+        await db.commit()
 
     return APIResponse(
         data={
@@ -150,7 +155,7 @@ async def advance_adaptively(
 @router.get("/remediation/{topic_id}", response_model=APIResponse[DifferentiatedRemediationRead])
 async def get_differentiated_remediation(
     topic_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Returns specialized differentiated remediation content: Misconception Deconstruction,
 

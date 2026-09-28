@@ -1,8 +1,8 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_optional_current_user
 from app.models.user import User
 from app.services.circuit_service import CircuitService
 from app.quantum.colab_launcher import ColabLauncher
@@ -40,20 +40,21 @@ async def create_circuit(
 @router.post("/execute", response_model=APIResponse[CircuitExecutionResultRead])
 async def execute_circuit(
     req: CircuitExecutionRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Executes a quantum circuit on Qiskit Aer, Google Cirq, or Xanadu PennyLane,
     with optional NISQ hardware physical noise modeling."""
     service = CircuitService(db)
-    result = await service.execute_circuit(current_user.id, req)
+    user_id = current_user.id if current_user else "guest_user"
+    result = await service.execute_circuit(user_id, req)
     return APIResponse(data=result, message=f"Circuit simulation completed successfully on {result.framework}")
 
 
 @router.post("/optimize", response_model=APIResponse[CircuitOptimizationResponse])
 async def optimize_circuit(
     req: CircuitOptimizationRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Performs automated quantum circuit optimization via involution gate cancellation,
@@ -66,7 +67,7 @@ async def optimize_circuit(
 @router.post("/sandbox/execute", response_model=APIResponse[SandboxExecutionResponseSchema])
 async def execute_sandbox_code(
     req: SandboxExecutionRequestSchema,
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Executes arbitrary quantum Python scripts inside a hardened, AST-filtered sandbox."""
     res = await QuantumCodeSandbox.execute_secure(
@@ -88,7 +89,7 @@ async def execute_sandbox_code(
 
 @router.get("/hardware/backends", response_model=APIResponse[List[IBMQDeviceResponse]])
 async def list_hardware_backends(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Lists available physical IBM Quantum hardware backends with real-time T1/T2 calibration metrics."""
@@ -100,7 +101,7 @@ async def list_hardware_backends(
 @router.post("/hardware/submit", response_model=APIResponse[IBMQJobStatusResponse])
 async def submit_hardware_job(
     req: IBMQJobSubmissionRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Submits a circuit to the physical quantum hardware execution pipeline,
@@ -113,7 +114,7 @@ async def submit_hardware_job(
 @router.get("/hardware/jobs/{job_id}", response_model=APIResponse[IBMQJobStatusResponse])
 async def get_hardware_job(
     job_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Polls status and counts of a physical quantum hardware job."""
@@ -126,7 +127,7 @@ async def get_hardware_job(
 
 @router.get("/qbraid/devices", response_model=APIResponse[List[Dict[str, Any]]])
 async def list_qbraid_devices(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Lists supported devices and environments in the qBraid multi-SDK cloud workspace."""
@@ -138,7 +139,7 @@ async def list_qbraid_devices(
 @router.post("/qbraid/submit", response_model=APIResponse[QBraidJobStatusResponse])
 async def submit_qbraid_job(
     req: QBraidJobSubmissionRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Submits circuit to qBraid unified cloud execution connector."""

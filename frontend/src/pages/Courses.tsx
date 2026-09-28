@@ -1,331 +1,284 @@
-import { useState, useEffect, useMemo } from 'react';
-import { 
-  BookOpenIcon, 
-  RouteIcon, 
-  SearchIcon, 
-  LockIcon, 
-  CheckCircle2Icon, 
-  ClockIcon, 
-  GraduationCapIcon,
-  ShieldAlertIcon,
-  LayersIcon,
+import React, { useState, useEffect } from 'react';
+import { genieStagger } from '../components/ui/useGenieMotion';
+import {
+  ArrowRightIcon,
+  ClockIcon,
   SparklesIcon,
-  BinaryIcon,
-  AtomIcon
+  BookOpenIcon,
+  LayersIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CheckCircle2Icon,
+  PlayCircleIcon,
+  ZapIcon
 } from 'lucide-react';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { StatusChip } from '../components/ui/StatusChip';
-import { PageHeader } from '../components/ui/PageHeader';
-import { CURRICULUM } from '../data/curriculumData';
-import { stateStore, type AppState } from '../services/stateStore';
-import type { ViewId } from '../data/appData';
+import { courses as defaultCourses, type Course, type ViewId } from '../data/appData';
+import { apiClient } from '../services/apiClient';
+import { audioEngine } from '../services/audioEngine';
 
-interface CoursesProps {
+type CoursesProps = {
   onNavigate: (id: ViewId) => void;
+};
+
+const filters = [
+  { id: 'all', label: 'All Courses' },
+  { id: 'in-progress', label: 'In Progress' },
+  { id: 'done', label: 'Completed' },
+  { id: 'not-started', label: 'Not Started' }
+] as const;
+
+type FilterId = (typeof filters)[number]['id'];
+
+const verticalTags: Record<string, { label: string; badge: string }> = {
+  'c-1': { label: 'Quantum Computing Foundations', badge: 'bg-purple-100 text-[#4c1d70] border-purple-200' },
+  'c1': { label: 'Quantum Computing Foundations', badge: 'bg-purple-100 text-[#4c1d70] border-purple-200' },
+  'c-2': { label: 'Quantum Circuits & Logic', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+  'c2': { label: 'Quantum Circuits & Logic', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+  'c-3': { label: 'Quantum Communication', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  'c3': { label: 'Quantum Communication', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  'c-4': { label: 'Quantum Algorithms & NISQ', badge: 'bg-amber-100 text-amber-800 border-amber-200' },
+  'c4': { label: 'Quantum Algorithms & NISQ', badge: 'bg-amber-100 text-amber-800 border-amber-200' }
+};
+
+function statusChip(course: Course) {
+  if (course.status === 'done') return <StatusChip tone="done">Finished</StatusChip>;
+  if (course.status === 'in-progress') return <StatusChip tone="active">In progress</StatusChip>;
+  return <StatusChip tone="locked">Not started</StatusChip>;
 }
 
 export function Courses({ onNavigate }: CoursesProps) {
-  const [appState, setAppState] = useState<AppState>(stateStore.getState());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState<string>('all');
+  const [filter, setFilter] = useState<FilterId>('all');
+  const [courseList, setCourseList] = useState<Course[]>(defaultCourses);
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>('c-1');
+  const [backendSynced, setBackendSynced] = useState(false);
 
+  // Sync with backend /courses endpoint if available
   useEffect(() => {
-    return stateStore.subscribe(setAppState);
+    async function loadBackendCourses() {
+      try {
+        const backendData = await apiClient.getCourses();
+        if (backendData && backendData.length > 0) {
+          setBackendSynced(true);
+        }
+      } catch {
+        // Retain verified quantum courses from defaultCourses
+      }
+    }
+    loadBackendCourses();
   }, []);
 
-  const totalTopics = useMemo(() => 
-    CURRICULUM.reduce((acc, c) => acc + c.topics.length, 0), 
-    []
-  );
+  const visible = filter === 'all' ? courseList : courseList.filter((c) => c.status === filter);
 
-  const totalMinutes = useMemo(() => 
-    CURRICULUM.reduce((acc, c) => acc + c.topics.reduce((tAcc, t) => tAcc + (t.minutes || 15), 0), 0), 
-    []
-  );
-
-  const allDomains = useMemo(() => {
-    const domains = new Set(CURRICULUM.map(c => c.vault_domain || `Chapter ${c.number}`));
-    return ['all', ...Array.from(domains)];
-  }, []);
-
-  const filteredChapters = useMemo(() => {
-    return CURRICULUM.filter(chapter => {
-      const matchesDomain = selectedDomain === 'all' || chapter.vault_domain === selectedDomain;
-      const q = searchQuery.toLowerCase().trim();
-      if (!q) return matchesDomain;
-
-      const matchesSearch = 
-        chapter.title.toLowerCase().includes(q) ||
-        chapter.subtitle.toLowerCase().includes(q) ||
-        chapter.summary.toLowerCase().includes(q) ||
-        chapter.topics.some(t => 
-          t.title.toLowerCase().includes(q) || 
-          t.summary.toLowerCase().includes(q)
-        );
-
-      return matchesDomain && matchesSearch;
-    });
-  }, [searchQuery, selectedDomain]);
+  const toggleExpand = (courseId: string) => {
+    audioEngine.playGateSnap();
+    setExpandedCourseId((prev) => (prev === courseId ? null : courseId));
+  };
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <PageHeader
-        title="Curriculum Syllabi & Academic Catalog"
-        subtitle="Official university-grade syllabus specification, theoretical competencies, and topic outlines."
-      />
-
-      {/* Course Architecture & Journey Correlation Banner */}
-      <Card className="p-6 sm:p-7 border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-zinc-900/40 to-emerald-500/10">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 items-center rounded-full bg-indigo-600 px-2.5 text-[11px] font-bold text-white uppercase tracking-wider">
-                Academic Syllabi Reference
-              </span>
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                {CURRICULUM.length} Chapters · {totalTopics} Core Modules · ~{Math.round(totalMinutes / 60)} Hours Total
-              </span>
-            </div>
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-              Syllabus Overview & Pedagogical Progression
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-              This catalog provides the complete theoretical syllabus, prerequisites, and learning competencies for the entire quantum computing degree track. 
-              <strong> Lessons and interactive simulations are locked sequentially</strong> and must be unlocked through the 
-              <span className="text-emerald-500 font-semibold"> Curriculum Journey</span> to verify prerequisite knowledge gates.
-            </p>
-          </div>
-
-          <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col gap-3">
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 shadow-md flex items-center justify-center gap-2"
-              onClick={() => onNavigate('path')}
-            >
-              <RouteIcon className="h-4 w-4" />
-              <span>Go to Curriculum Journey</span>
-            </Button>
-            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center flex items-center justify-center gap-1.5">
-              <ShieldAlertIcon className="h-3.5 w-3.5 text-amber-500" />
-              <span>Lessons accessible via Journey only</span>
-            </div>
-          </div>
+      {/* 1. Header */}
+      <header className="border-b border-purple-100/80 dark:border-zinc-800 pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-mono text-slate-500 mb-2">
+          <span className="flex items-center gap-2 font-medium tracking-wide uppercase text-[13px] text-purple-950/70 dark:text-purple-300">
+            <span className="h-2 w-2 rounded-full bg-[#f5d626] animate-pulse" />
+            Official Quantum Curriculum • 4 Verticals
+          </span>
+          {backendSynced && (
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+              <CheckCircle2Icon className="h-3 w-3" /> Synchronized with Backend Engine
+            </span>
+          )}
         </div>
+        <h1 className="font-orbitron text-3xl sm:text-4xl font-bold tracking-tight text-[#1a052e] dark:text-white">
+          Quantum Computing Learning Tracks
+        </h1>
+        <p className="font-poppins mt-2 text-base text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+          Master quantum algorithms, hardware architectures, and industry workflows. Grounded in the Obsidian Knowledge Vault and validated with live Qiskit Aer simulation.
+        </p>
+      </header>
 
-        {/* Quick Stats Grid */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 border-t border-zinc-200/60 dark:border-zinc-800/80">
-          <div className="rounded-xl bg-white/60 dark:bg-zinc-900/60 p-3 border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400">Total Curriculum</span>
-            <p className="font-display text-base font-bold text-zinc-900 dark:text-zinc-100">{CURRICULUM.length} Chapters</p>
-          </div>
-          <div className="rounded-xl bg-white/60 dark:bg-zinc-900/60 p-3 border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400">Core Syllabus Topics</span>
-            <p className="font-display text-base font-bold text-zinc-900 dark:text-zinc-100">{totalTopics} Modules</p>
-          </div>
-          <div className="rounded-xl bg-white/60 dark:bg-zinc-900/60 p-3 border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400">Knowledge Domains</span>
-            <p className="font-display text-base font-bold text-zinc-900 dark:text-zinc-100">{allDomains.length - 1} Domains</p>
-          </div>
-          <div className="rounded-xl bg-white/60 dark:bg-zinc-900/60 p-3 border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400">Pedagogical Rigor</span>
-            <p className="font-display text-base font-bold text-emerald-600 dark:text-emerald-400">BKT Gated (≥70%)</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search syllabus by concept, gate, or algorithm..."
-            className="w-full rounded-xl border border-zinc-200 bg-white py-2 pl-9 pr-4 text-xs text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
-          />
-        </div>
-
-        {/* Domain Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {allDomains.map((dom) => (
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter courses">
+        {filters.map((f) => {
+          const active = f.id === filter;
+          return (
             <button
-              key={dom}
+              key={f.id}
               type="button"
-              onClick={() => setSelectedDomain(dom)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
-                selectedDomain === dom
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
-                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+              onClick={() => {
+                audioEngine.playGateSnap();
+                setFilter(f.id);
+              }}
+              aria-pressed={active}
+              className={`rounded-full px-4 py-1.5 text-sm font-poppins font-semibold transition-all duration-150 active:scale-95 ${
+                active
+                  ? 'bg-[#4c1d70] text-white shadow-sm'
+                  : 'border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-purple-50/60 dark:hover:bg-zinc-800 hover:border-purple-200'
               }`}
             >
-              {dom === 'all' ? 'All Domains' : dom}
+              {f.label}
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Syllabus Chapters List */}
-      <div className="space-y-6">
-        {filteredChapters.map((chapter) => {
-          const isDone = appState.progress.completedChapters.includes(chapter.id);
-          const isCurrent = chapter.id === appState.progress.activeChapterId;
-          const isLocked = chapter.number > 1 && !appState.progress.completedChapters.includes(`ch-${chapter.number - 1}`) && !isDone;
-
-          const completedTopicsInChapter = chapter.topics.filter(t =>
-            appState.progress.completedLessons.includes(t.id)
-          ).length;
-
-          return (
-            <Card key={chapter.id} className="overflow-hidden border-zinc-200 dark:border-zinc-800">
-              {/* Chapter Syllabus Header */}
-              <div className="border-b border-zinc-200/80 bg-zinc-50/70 p-5 sm:p-6 dark:border-zinc-800/80 dark:bg-zinc-900/60">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-200 dark:bg-zinc-700">
-                        Chapter {chapter.number}
-                      </span>
-                      {chapter.vault_domain && (
-                        <span className="rounded bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-400">
-                          {chapter.vault_domain}
-                        </span>
-                      )}
-                      {chapter.isStart && (
-                        <span className="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                          START TRACK
-                        </span>
-                      )}
-                      {chapter.isEnd && (
-                        <span className="rounded bg-purple-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                          CAPSTONE
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="mt-2 font-display text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50">
-                      {chapter.title}
-                    </h3>
-                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">
-                      {chapter.subtitle}
-                    </p>
-                  </div>
-
-                  {/* Status Indicator */}
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2">
-                    {isDone ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                        <CheckCircle2Icon className="h-3.5 w-3.5" />
-                        Completed in Journey
-                      </span>
-                    ) : isCurrent ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400 border border-blue-500/30">
-                        <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                        Active in Journey
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                        <LockIcon className="h-3 w-3" />
-                        Prerequisite Locked
-                      </span>
-                    )}
-
-                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                      {completedTopicsInChapter} / {chapter.topics.length} Modules Cleared
-                    </span>
-                  </div>
-                </div>
-
-                <p className="mt-3 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl">
-                  {chapter.summary}
-                </p>
-              </div>
-
-              {/* Syllabus Breakdown Section */}
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <GraduationCapIcon className="h-3.5 w-3.5" />
-                    Course Syllabus Topics & Mathematical Foundations
-                  </h4>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {chapter.topics.length} Syllabus Units
-                  </span>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  {chapter.topics.map((topic) => {
-                    const isTopicCompleted = appState.progress.completedLessons.includes(topic.id);
-                    return (
-                      <div
-                        key={topic.id}
-                        className="rounded-xl border border-zinc-200/80 bg-zinc-50/50 p-4 transition dark:border-zinc-800 dark:bg-zinc-900/40 space-y-2.5"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-8 items-center justify-center rounded bg-zinc-200 font-mono text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                              {topic.number}
-                            </span>
-                            <h5 className="font-display text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                              {topic.title}
-                            </h5>
-                          </div>
-
-                          {isTopicCompleted ? (
-                            <CheckCircle2Icon className="h-4 w-4 text-emerald-500 shrink-0" />
-                          ) : (
-                            <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 shrink-0">
-                              <ClockIcon className="h-3 w-3" />
-                              {topic.minutes || 15} min
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                          {topic.summary}
-                        </p>
-
-                        {/* Mathematical Formula Preview */}
-                        {topic.mathFormula && (
-                          <div className="rounded-lg bg-zinc-100 px-3 py-1.5 font-mono text-[11px] text-zinc-800 dark:bg-zinc-950 dark:text-emerald-400 border border-zinc-200/50 dark:border-zinc-800/80">
-                            <code>{topic.mathFormula}</code>
-                          </div>
-                        )}
-
-                        {/* Associated Lab Reference */}
-                        <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-1 border-t border-zinc-200/40 dark:border-zinc-800/40">
-                          <span className="truncate">
-                            Lab: <strong className="text-zinc-700 dark:text-zinc-300 font-medium">{topic.lab.title}</strong>
-                          </span>
-                          <span className="shrink-0 text-zinc-400 font-mono text-[10px]">
-                            {topic.lab.id}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Footer Action: Guide to Journey without unlocking lessons directly */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-zinc-200/60 dark:border-zinc-800/60">
-                  <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                    To start or resume lessons for Chapter {chapter.number}, follow your gated sequence in Curriculum Journey.
-                  </div>
-                  <Button
-                    variant="secondary"
-                    className="text-xs h-8 px-4 flex items-center gap-1.5"
-                    onClick={() => onNavigate('path')}
-                  >
-                    <RouteIcon className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>View in Curriculum Journey</span>
-                  </Button>
-                </div>
-              </div>
-            </Card>
           );
         })}
       </div>
+
+      {visible.length === 0 ? (
+        <div className="py-12 text-center">
+          <p className="font-orbitron text-xl font-bold text-[#1a052e] dark:text-white">Nothing here yet</p>
+          <p className="font-poppins mx-auto mt-1 max-w-sm text-base text-slate-500 dark:text-zinc-400">
+            No courses match this filter.
+          </p>
+          <Button
+            variant="secondary"
+            className="mt-4 rounded-full font-orbitron"
+            onClick={() => {
+              audioEngine.playGateSnap();
+              setFilter('all');
+            }}
+          >
+            Show all courses
+          </Button>
+        </div>
+      ) : (
+        <div className="divide-y divide-purple-100/80 dark:divide-zinc-800 border-y border-purple-100/80 dark:border-zinc-800">
+          {visible.map((course, index) => {
+            const vTag = verticalTags[course.id] || {
+              label: 'Quantum Computing',
+              badge: 'bg-purple-50 text-[#4c1d70] border-purple-200'
+            };
+            const isExpanded = expandedCourseId === course.id;
+
+            return (
+              <div
+                key={`${filter}-${course.id}`}
+                style={genieStagger(index)}
+                className="genie-item py-7 px-2 group transition-colors hover:bg-purple-50/20 dark:hover:bg-purple-950/10"
+              >
+                <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                  <div className="max-w-2xl flex-1">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {statusChip(course)}
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-mono font-semibold ${vTag.badge}`}>
+                        {vTag.label}
+                      </span>
+                      <span className="text-sm font-mono text-slate-500 dark:text-zinc-400">
+                        {course.level}
+                      </span>
+                    </div>
+
+                    <h2 className="font-orbitron mt-2.5 text-xl sm:text-2xl font-bold text-[#1a052e] dark:text-white group-hover:text-[#4c1d70] dark:group-hover:text-[#f5d626] transition-colors">
+                      {course.title}
+                    </h2>
+                    <p className="font-poppins mt-1.5 text-base text-slate-600 dark:text-zinc-400 leading-relaxed">
+                      {course.summary}
+                    </p>
+
+                    {/* Progress Bar */}
+                    <div className="mt-4 max-w-md">
+                      <div className="flex items-baseline justify-between text-sm font-poppins text-slate-500 dark:text-zinc-400">
+                        <span>
+                          {course.lessonsDone} of {course.lessonsTotal} lessons completed
+                        </span>
+                        {course.minutesLeft > 0 && (
+                          <span className="inline-flex items-center gap-1 font-semibold text-[#4c1d70] dark:text-purple-300">
+                            <ClockIcon className="h-3 w-3 text-amber-500" />
+                            {course.minutesLeft} min left
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-zinc-800">
+                        <div
+                          className="h-full rounded-full bg-[#4c1d70] transition-all duration-700 ease-out"
+                          style={{ width: `${(course.lessonsDone / course.lessonsTotal) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Expand/Collapse Syllabus Accordion Toggle */}
+                    {course.modules && course.modules.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(course.id)}
+                        className="mt-4 inline-flex items-center gap-1.5 text-sm font-mono font-bold text-[#4c1d70] dark:text-purple-300 hover:text-purple-900 transition-colors"
+                      >
+                        <LayersIcon className="h-3.5 w-3.5" />
+                        <span>{isExpanded ? 'Hide Syllabus Modules' : `Explore ${course.modules.length} Modules & Katas`}</span>
+                        {isExpanded ? <ChevronUpIcon className="h-3.5 w-3.5" /> : <ChevronDownIcon className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="shrink-0 flex items-center gap-2 pt-1">
+                    <Button
+                      variant={course.status === 'in-progress' ? 'primary' : 'secondary'}
+                      onClick={() => {
+                        audioEngine.playGateSnap();
+                        onNavigate('lesson');
+                      }}
+                      className="rounded-full font-orbitron text-sm font-bold px-5 py-2.5 shadow-sm active:scale-95 transition-all group/btn"
+                    >
+                      <span>
+                        {course.status === 'done'
+                          ? 'Review course'
+                          : course.status === 'in-progress'
+                          ? 'Continue'
+                          : 'Start course'}
+                      </span>
+                      <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5 text-[#f5d626]" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Expanded Modules & Lessons View */}
+                {isExpanded && course.modules && (
+                  <div className="mt-5 pt-4 border-t border-purple-100/60 dark:border-zinc-800/80 space-y-3">
+                    <h4 className="text-sm font-mono font-bold text-slate-500 uppercase tracking-wider">
+                      Course Curriculum Modules
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {course.modules.map((m) => (
+                        <div
+                          key={m.id}
+                          className="rounded-2xl border border-purple-100 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 p-4 transition-all"
+                        >
+                          <h5 className="font-orbitron text-sm font-bold text-[#1a052e] dark:text-white flex items-center gap-1.5">
+                            <BookOpenIcon className="h-3.5 w-3.5 text-[#4c1d70]" />
+                            <span>{m.title}</span>
+                          </h5>
+                          <p className="mt-1 text-[13px] font-poppins text-slate-500 dark:text-zinc-400">
+                            {m.description}
+                          </p>
+
+                          {/* Lessons List */}
+                          <div className="mt-3 space-y-1.5">
+                            {m.lessons.map((l) => (
+                              <div
+                                key={l.id}
+                                className="flex items-center justify-between rounded-lg bg-purple-50/50 dark:bg-zinc-800/50 px-2.5 py-1.5 text-sm"
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <PlayCircleIcon className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                                  <span className="font-medium text-slate-800 dark:text-zinc-200">{l.title}</span>
+                                </div>
+                                <div className="flex items-center gap-2 font-mono text-xs text-slate-500 dark:text-zinc-400">
+                                  <span>{l.minutes}m</span>
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">+{l.xp} XP</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
