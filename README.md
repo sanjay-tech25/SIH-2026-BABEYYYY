@@ -437,8 +437,8 @@ sih2026/
 ### 1. Clone & Set Up Virtual Environment
 
 ```bash
-git clone https://github.com/sanjay-tech25/SIH-2026-BABEYYYY.git
-cd SIH-2026-BABEYYYY
+git clone https://github.com/sanjay-tech25/SIH26140.git
+cd SIH26140
 
 # Create and activate Python virtual environment
 python -m venv .venv
