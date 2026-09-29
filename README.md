@@ -4,7 +4,7 @@
 ### AI-Powered Adaptive Quantum Computing Learning Platform
 **Smart India Hackathon (SIH 2026) | Autonomous Agent & Socratic Laboratory Ecosystem**
 
-[![SIH 2026](https://img.shields.io/badge/SIH-2026_Finalist-blueviolet?style=for-the-badge&logo=target)](https://sih.gov.in/)
+
 [![Python 3.14](https://img.shields.io/badge/Python-3.14-blue?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
